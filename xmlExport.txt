@@ -1,12 +1,11 @@
-'xmlExport-0.3.a: 
+'xmlExport-0.4.a: 
 
 Option Public
 
 Sub Initialize
-'# Constants   ø
-	Const cstVersion = "2012.10.24-03"
+'# Constants   
+	Const cstVersion = "2012.10.25-04"
 	
-'# Declare variables
 '# Declare variables
 	Dim strTab, strNewLine, strForceFeed As String
 	Dim uidoc As NotesUIDocument
@@ -21,10 +20,10 @@ Sub Initialize
 	Dim CurrID As Long    
 	Dim attachment As NotesEmbeddedObject
 	Dim arrAttachmentNames, allFieldNames As Variant
-	Dim strErrors, attachmentName, filename As String     
+	Dim strErrors, attachmentName, filename As String      
 	Dim exportTarget, xmlFolder, dxlFolder, attachmentFolder, logFolder, projectPath, txtFolder As String
 	Dim strErrorLogName, strResultsLogName, strRecordsTxt, strAttachmentTxt, strErrorTxt As String
-	Dim exportXML11, exportXML, exportTXT11, exportTXT, exportDXL As Boolean
+	Dim exportXML11, exportXML, exportTXT11, exportTXT, exportDXL, exportAttachments, exportEmptyTags As Boolean
 	Dim strInTxt, strOnLineTxt As String
 	
 '##################### MUST SET THIS ##########################
@@ -44,6 +43,9 @@ Sub Initialize
 	exportTXT11 = True                              ' Set to true if you want 1 TXT per document            - rec.: False
 	exportXML11     = True                          ' Set to true if you want 1 XML per document    - rec.: False  
 	
+'# Export empty tags?
+	exportEmptyTags = True                  ' Huge dumps may need this set to false                 - rec.: True
+	exportAttachments = True                ' Your files/attachments, if any in the db.                     - rec.: True
 '###################### CAN SET THIS ##########################
 '#                                                                           Name of subfoders                                                                                   #
 '############################################################
@@ -63,7 +65,7 @@ Sub Initialize
 	strResultsLogName = |resultater|                        ' The results log file name "results" (will log documents, attachments and number of errors)
 	
 '# Logging, field names
-	strRecordsTxt = |Dokument|                              ' The text for documents in the log file, also used in the XML "Documents" 
+	strRecordsTxt = |Dokument|                              ' The text for documents in the log file, also used in the XML "Documents"  
 	strAttachmentTxt = |Filer|                                              ' The text for Attachments/files in the log file "Files"
 	strErrorTxt = |Feil|                                                            ' The text for Error in the log file "Errors"
 	strOnLineTxt = |på linje|                                              ' For error logging "on line"
@@ -74,6 +76,18 @@ Sub Initialize
 '##########################################################
 '######## Only self perceived experts should edit below this line ########
 '##########################################################
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	
 '# Set database and get documents collection
@@ -96,60 +110,97 @@ Sub Initialize
 	On Error Goto ErrorHandler
 	
 	Dim thisAgent As NotesAgent    
-	Set thisAgent = session.CurrentAgent           
+	Set thisAgent = session.CurrentAgent            
 	projectPath = exportTarget & Left(db.FileName, Len(db.FileName) - 4) ' remove extension and .
 	
-'#  Make folders for data extraction
+ '#  Make folders for data extraction
 	Mkdir  projectPath                                                                                                      ' Root folder for export
-	Mkdir  projectPath + |\| + dxlFolder + |\|                                              ' DXL subfolder
-	Mkdir  projectPath + |\| + attachmentFolder + |\|               ' Attachment subfolder
 	Mkdir  projectPath + |\| + logFolder + |\|                                      ' Log subfolder
-	Mkdir  projectPath + |\| + xmlFolder + |\|                                      ' XML subfolder
-	Mkdir  projectPath + |\| + txtFolder + |\|                                              ' TXT subfolder
+	
+	If exportDXL Then
+		Mkdir  projectPath + |\| + dxlFolder + |\|                                              ' DXL subfolder
+	End If
+	If exportAttachments Then
+		Mkdir  projectPath + |\| + attachmentFolder + |\|               ' Attachment subfolder
+	End If
+	
+	If exportXML Or exportXML11 Then       
+		Mkdir  projectPath + |\| + xmlFolder + |\|                                      ' XML subfolder
+		If exportXML11 Then
+			Mkdir  projectPath + |\| + xmlFolder + |\1\|                            ' XML subfolder
+		End If
+	End If
+	If exportTXT Or exportTXT11 Then
+		Mkdir  projectPath + |\| + txtFolder + |\|                                              ' TXT subfolder
+		If exportTXT11 Then
+			Mkdir  projectPath + |\| + txtFolder + |\1\|
+		End If
+	End If
+	
 	
         ' This is for the DXL dump
-        'filename =  projectPath + dxlFolder + "\" & Left(db.FileName, Len(db.FileName) - 3) + "dxl"
-	fileName$ =  projectPath + |\| + dxlFolder + |\| + Left(db.FileName, Len(db.FileName) - 3) + "dxl"
-	
-        ' TODO: Consider commenting out this code and check if it's needed (after all, we have the error checking)
-	If Not stream.Open(fileName$) Then
-		Messagebox "Cannot open " + fileName$ + "Error"
-		Exit Sub
+	If exportDXL Then
+		fileName$ =  projectPath + |\| + dxlFolder + |\| + Left(db.FileName, Len(db.FileName) - 3) + |dxl|
+		
+                ' TODO: Consider commenting out this code and check if it's needed (after all, we have the error checking)
+		If Not stream.Open(fileName$) Then
+			Messagebox |Cannot open | + fileName$ + |Error|
+			Exit Sub
+		End If
+		Call stream.Truncate
+		
+        '# Export current database as DXL
+		Set exporter = session.CreateDXLExporter
+        '# Set the input for the exporter
+		Call exporter.SetInput(col)
+        '# Set the output for the exporter
+		Call exporter.SetOutput(stream)
+        '# kick off the exporter process
+		Call exporter.Process
 	End If
-	Call stream.Truncate
-	
-'# Export current database as DXL
-	Set exporter = session.CreateDXLExporter
-'# Set the input for the exporter
-	Call exporter.SetInput(col)
-'# Set the output for the exporter
-	Call exporter.SetOutput(stream)
-'# kick off the exporter process
-	Call exporter.Process
-	
 '# Get documents for loop
 	Set dc = db.AllDocuments
 	Set doc = dc.GetFirstDocument  
 	
 	CurrID = 100000 ' Just a counter to get unique names
+	If exportXML Then
+		Open projectPath + |\| + xmlFolder + |\| + Left(db.FileName, Len(db.FileName) - 4) + |.xml| For Output As 3 ' large XML
+		Print #3, |<?xml version="1.0" standalone="yes"?>|             
+	End If
+	If exportTXT Then
+		Open projectPath + |\| + txtFolder + |\| + Left(db.FileName, Len(db.FileName) - 4) + |.txt| For Output As 4 ' large TXT
+	End If
 	
-	Open projectPath + |\| + xmlFolder + |\!| + xmlFolder + |.xml| For Output As 3 ' large XML
-	Open projectPath + |\| + txtFolder + |\!| + txtFolder + |.txt| For Output As 4 ' large TXT
-	Print #3, |<?xml version="1.0" standalone="yes"?>|             
 	
 	While Not doc Is Nothing
 		numDocs = numDocs + 1
 		
-		Open projectPath + |\| + xmlFolder + |\| + Cstr(CurrID) + |.xml| For Output As 1 ' 1:1 XML
-		Open projectPath + |\| + txtFolder + |\| + Cstr(CurrID) + |.txt| For Output As 2 ' 1:1 TXT
-		Print #1, |<?xml version="1.0" standalone="yes"?>|     
-		Print #1, strTab + |<| + strRecordsTxt + |>|
-		Print #1, strTab + |<record>| + Cstr(CurrID) + |</record>|             
-		Print #3, strTab + |<| + strRecordsTxt + |>|
-		Print #3, strTab + |<record>| + Cstr(CurrID) + |</record>|             
+		If exportXML11 Then
+			Open projectPath + |\| + xmlFolder + |\1\| + Cstr(CurrID) + |.xml| For Output As 1 ' 1:1 XML
+		End If         
 		
-		Print #2, strRecordsTxt + |:| + strTab + Cstr(CurrID)
-		Print #4, strRecordsTxt + |:| + strTab + Cstr(CurrID)
+		If exportTXT11 Then
+			Open projectPath + |\| + txtFolder + |\1\| + Cstr(CurrID) + |.txt| For Output As 2 ' 1:1 TXT
+		End If
+		
+		If exportXML11 Then
+			Print #1, |<?xml version="1.0" standalone="yes"?>|     
+			Print #1, strTab + |<| + strRecordsTxt + |>|
+			Print #1, strTab + |<record>| + Cstr(CurrID) + |</record>|            
+		End If
+		
+		If exportXML Then
+			Print #3, strTab + |<| + strRecordsTxt + |>|
+			Print #3, strTab + |<record>| + Cstr(CurrID) + |</record>|            
+		End If
+		
+		If exportTXT11 Then
+			Print #2, strRecordsTxt + |:| + strTab + Cstr(CurrID)
+		End If
+		
+		If exportTXT Then
+			Print #4, strRecordsTxt + |:| + strTab + Cstr(CurrID)
+		End If
 		
 		arrAttachmentNames = Evaluate("@AttachmentNames", doc)
 		For n = 0 To Ubound( arrAttachmentNames )
@@ -159,13 +210,27 @@ Sub Initialize
 				Set attachment = doc.GetAttachment(arrAttachmentNames(n) )
 				
 				fileName=Cstr(CurrID)+"-"+arrAttachmentNames(n)
-				Print #1, strTab & strTab & |<| & strAttachmentTxt  & |>| & fileName & |</| & strAttachmentTxt & |>|
-				Print #3, strTab & strTab & |<| & strAttachmentTxt  & |>| & fileName & |</| & strAttachmentTxt & |>|                   
-				Print #2, strAttachmentTxt  & |:| & strTab & fileName
-				Print #4, strAttachmentTxt  & |:| & strTab & fileName
+				
+				If exportXML11 Then                            
+					Print #1, strTab & strTab & |<| & strAttachmentTxt  & |>| & fileName & |</| & strAttachmentTxt & |>|
+				End If                         
+				
+				If exportXML Then
+					Print #3, strTab & strTab & |<| & strAttachmentTxt  & |>| & fileName & |</| & strAttachmentTxt & |>|                   
+				End If
+				
+				If exportTXT11 Then
+					Print #2, strAttachmentTxt  & |:| & strTab & fileName
+				End If
+				
+				If exportTXT Then
+					Print #4, strAttachmentTxt  & |:| & strTab & fileName
+				End If
 				
                                 ' Extract file
-				Call    attachment.ExtractFile( projectPath & "\" & attachmentFolder & "\" & fileName)
+				If exportAttachments Then
+					Call    attachment.ExtractFile( projectPath & "\" & attachmentFolder & "\" & fileName)
+				End If
 				numFiles = numFiles + 1 ' Count files
 			End If
 			
@@ -175,33 +240,62 @@ Sub Initialize
 		For k = 0 To Ubound( allFieldNames )
 			
 			If Not Isempty(doc.GetItemValue(allFieldNames(k))) Then
-				Print #1, strTab & strTab &  |<| & allFieldNames(k)  & |>| & doc.GetItemValue(allFieldNames(k))(0)&|</| & allFieldNames(k)  & |>|
-				Print #3, strTab & strTab &  |<| & allFieldNames(k)  & |>| & doc.GetItemValue(allFieldNames(k))(0)&|</| & allFieldNames(k)  & |>|
-				Print #2, allFieldNames(k)  & |:| & strTab & doc.GetItemValue(allFieldNames(k))(0)
-				Print #4, allFieldNames(k)  & |:| & strTab & doc.GetItemValue(allFieldNames(k))(0)
+				If exportXML11 Then
+					Print #1, strTab & strTab &  |<| & allFieldNames(k)  & |>| & doc.GetItemValue(allFieldNames(k))(0)&|</| & allFieldNames(k)  & |>|
+				End If
+				If exportXML Then
+					Print #3, strTab & strTab &  |<| & allFieldNames(k)  & |>| & doc.GetItemValue(allFieldNames(k))(0)&|</| & allFieldNames(k)  & |>|
+				End If
+				If exportTXT11 Then
+					Print #2, allFieldNames(k)  & |:| & strTab & doc.GetItemValue(allFieldNames(k))(0)
+				End If
+				If exportTXT Then
+					Print #4, allFieldNames(k)  & |:| & strTab & doc.GetItemValue(allFieldNames(k))(0)
+				End If
 			Else
-				Print #1, strTab & strTab & |<| & allFieldNames(k)  & |></| & allFieldNames(k)  & |>|                  
-				Print #3, strTab & strTab & |<| & allFieldNames(k)  & |></| & allFieldNames(k)  & |>|                  
-				Print #2, allFieldNames(k)  & |:|
-				Print #4, allFieldNames(k)  & |:|
+				If (exportEmptyTags) Then
+					If exportXML11 Then
+						Print #1, strTab & strTab & |<| & allFieldNames(k)  & |></| & allFieldNames(k)  & |>|                  
+					End If
+					If exportXML Then
+						Print #3, strTab & strTab & |<| & allFieldNames(k)  & |></| & allFieldNames(k)  & |>|  
+					End If
+					If exportTXT11 Then
+						Print #2, allFieldNames(k)  & |:|
+					End If
+					If exportTXT Then
+						Print #4, allFieldNames(k)  & |:|
+					End If
+				End If
 			End If
 			
 		Next k
 ' Close XML
-		Print #1, strTab & |</| & strRecordsTxt  & |>| 
-		Print #1, |</xml>|     
-		Print #2, strForceFeed
-		
-		Close #1
-		Close #2
+		If exportXML11 Then
+			Print #1, strTab & |</| & strRecordsTxt  & |>| 
+			Print #1, |</xml>|     
+		End If
+		If exportTXT11 Then
+			Print #2, strForceFeed
+		End If
+		If exportXML11 Then
+			Close #1
+		End If
+		If exportTXT11 Then
+			Close #2
+		End If
 		
 		Set doc = dc.GetNextDocument( doc )
 		CurrID = CurrID + 1
 	Wend
 	
-	Print #3, |</xml>|
-	Close #3
-	Close #4
+	If exportXML Then
+		Print #3, |</xml>|
+		Close #3
+	End If
+	If exportTXT Then
+		Close #4
+	End If
 	
 	Open  projectPath & |\| & logFolder & |\| & strResultsLogName & |.xml| For Output As 1
 	Print #1, |<?xml version="1.0" standalone="yes"?>|     
@@ -228,7 +322,7 @@ ErrorHandler:
 	Case Else              
 '## Log and count Errors s
 		numErr = numErr + 1
-		strErrors = strErrors + strNewLine + strTab + strTab + |<| & strErrorTxt & |>| + Cstr(Err) + | | + strInTxt + | | + Cstr(thisAgent.Name) + | | + strOnLineTxt + |  | + Cstr(Erl) + |: | + Cstr(Error) +|</| & trErrorTxt & |>|        
+		strErrors = strErrors + strNewLine + strTab + strTab + |<| & strErrorTxt & |>| + Cstr(Err) + | | + strInTxt + | | + Cstr(thisAgent.Name) + | | + strOnLineTxt + |  | + Cstr(Erl) + |: | + Cstr(Error) +|</| & strErrorTxt & |>|        
 		Resume Done                                                            
 	End Select
 	
