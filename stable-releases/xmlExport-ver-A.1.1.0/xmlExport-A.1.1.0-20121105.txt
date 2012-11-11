@@ -1,6 +1,8 @@
-'xmlExport: 
+'xmlExport_A.1.1.0: 
 
 Option Explicit
+'xmlExport: 
+
 
 '   Copyright [2012] [ Olav Alexander Mjelde / Bergen Byarkiv ]
 
@@ -16,8 +18,8 @@ Option Explicit
 '   See the License for the specific language governing permissions and
 '   limitations under the License.
 
-'# Constants	
-Const cstVersion = "1.1"
+'# Constants    
+Const cstVersion = "A.1.1.1.0"
 Const cstVersionDate = "2012-11-05"
 Const cstVersionAuthor = "Olav Alexander Mjelde"
 Const cstVersionAuthorOrg = "Bergen byarkiv"

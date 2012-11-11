@@ -1,4 +1,4 @@
-'xmlExport_1.1: 
+'xmlExport_A.1.1.0: 
 
 Option Explicit
 'xmlExport: 
@@ -19,7 +19,7 @@ Option Explicit
 '   limitations under the License.
 
 '# Constants    
-Const cstVersion = "1.1"
+Const cstVersion = "A.1.1.1.0"
 Const cstVersionDate = "2012-11-05"
 Const cstVersionAuthor = "Olav Alexander Mjelde"
 Const cstVersionAuthorOrg = "Bergen byarkiv"
