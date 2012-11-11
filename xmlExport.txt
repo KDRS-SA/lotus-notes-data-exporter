@@ -1,0 +1,236 @@
+'xmlExport-0.3.a: 
+
+Option Public
+
+Sub Initialize
+'# Constants   ø
+	Const cstVersion = "2012.10.24-03"
+	
+'# Declare variables
+'# Declare variables
+	Dim strTab, strNewLine, strForceFeed As String
+	Dim uidoc As NotesUIDocument
+	Dim session As New NotesSession
+	Dim db As NotesDatabase
+	Dim doc As NotesDocument
+	Dim stream As NotesStream
+	Dim exporter As NotesDXLExporter
+	Dim col As NotesDocumentCollection
+	Dim dc As NotesDocumentCollection
+	Dim numFiles, numDocs, numErr, n, k As Integer
+	Dim CurrID As Long    
+	Dim attachment As NotesEmbeddedObject
+	Dim arrAttachmentNames, allFieldNames As Variant
+	Dim strErrors, attachmentName, filename As String     
+	Dim exportTarget, xmlFolder, dxlFolder, attachmentFolder, logFolder, projectPath, txtFolder As String
+	Dim strErrorLogName, strResultsLogName, strRecordsTxt, strAttachmentTxt, strErrorTxt As String
+	Dim exportXML11, exportXML, exportTXT11, exportTXT, exportDXL As Boolean
+	Dim strInTxt, strOnLineTxt As String
+	
+'##################### MUST SET THIS ##########################
+'#                                                                              Root export folder                                                                                              #
+'#############################################################
+	exportTarget = |D:\Byarkiv\Eksport\|    'For instance "D:\\Byarkiv\\Eksport\\" (remember trailing)
+	
+'#################### SHOULD SET THIS #########################
+'#                                                                        Which formats to export                                                                            #
+'############################################################
+'# These apply to 99% of the users
+	exportXML = True                                        ' Set to true if you want 1 XML per database            - rec.: True
+	exportTXT = True                                        ' Set to true if you want 1 TXT per database            - rec.: True
+	exportDXL        = True                                 ' Dump db to DXL (FULL XML DUMP)                        - rec.: True
+	
+'# These apply for 1% of the users (much more work in the following migration steps)   
+	exportTXT11 = True                              ' Set to true if you want 1 TXT per document            - rec.: False
+	exportXML11     = True                          ' Set to true if you want 1 XML per document    - rec.: False  
+	
+'###################### CAN SET THIS ##########################
+'#                                                                           Name of subfoders                                                                                   #
+'############################################################
+'# Sub export folders - NO SLASHES!
+	xmlFolder = |xml|                                                               ' For XML files
+	txtFolder = |txt|                                                                       ' For TXT files
+	dxlFolder = |dxl|                                                                       ' For DXL dump of db
+	attachmentFolder = |filer|                                      ' For attachments / files
+	logFolder = |logg|                                                              ' For logs (error and result)
+	
+'###################### CAN SET THIS ##########################
+' #                      Here you can modify the script for language, filenames, etc.                       #
+' #                      Please do not use any slashes                                                                                                     #
+' ###########################################################
+'# Logging, file names, no extensions!
+	strErrorLogName = |avvik|                                       ' The error log file name "error" (will only log when errors>0)
+	strResultsLogName = |resultater|                        ' The results log file name "results" (will log documents, attachments and number of errors)
+	
+'# Logging, field names
+	strRecordsTxt = |Dokument|                              ' The text for documents in the log file, also used in the XML "Documents" 
+	strAttachmentTxt = |Filer|                                              ' The text for Attachments/files in the log file "Files"
+	strErrorTxt = |Feil|                                                            ' The text for Error in the log file "Errors"
+	strOnLineTxt = |på linje|                                              ' For error logging "on line"
+	strInTxt = |i|                                                                          ' For error logging "in" (error in)
+	
+'##########################################################
+'########                       No configuration below this part                                           ########
+'##########################################################
+'######## Only self perceived experts should edit below this line ########
+'##########################################################
+	
+	
+'# Set database and get documents collection
+	Set db = session.CurrentDatabase
+	Set col = db.UnprocessedDocuments
+	
+'#  Counters for logging, etc.
+	numFiles = 0
+	numErr = 0
+	numDocs = 0            
+	
+        ' Set the tab and the strNewLine
+	strTab = Chr$(9)
+	strNewLine = Chr$(10)
+	strForceFeed = Chr$(12)
+	
+'# Open xml file named after current database
+	Set stream = session.CreateStream
+	
+	On Error Goto ErrorHandler
+	
+	Dim thisAgent As NotesAgent    
+	Set thisAgent = session.CurrentAgent           
+	projectPath = exportTarget & Left(db.FileName, Len(db.FileName) - 4) ' remove extension and .
+	
+'#  Make folders for data extraction
+	Mkdir  projectPath                                                                                                      ' Root folder for export
+	Mkdir  projectPath + |\| + dxlFolder + |\|                                              ' DXL subfolder
+	Mkdir  projectPath + |\| + attachmentFolder + |\|               ' Attachment subfolder
+	Mkdir  projectPath + |\| + logFolder + |\|                                      ' Log subfolder
+	Mkdir  projectPath + |\| + xmlFolder + |\|                                      ' XML subfolder
+	Mkdir  projectPath + |\| + txtFolder + |\|                                              ' TXT subfolder
+	
+        ' This is for the DXL dump
+        'filename =  projectPath + dxlFolder + "\" & Left(db.FileName, Len(db.FileName) - 3) + "dxl"
+	fileName$ =  projectPath + |\| + dxlFolder + |\| + Left(db.FileName, Len(db.FileName) - 3) + "dxl"
+	
+        ' TODO: Consider commenting out this code and check if it's needed (after all, we have the error checking)
+	If Not stream.Open(fileName$) Then
+		Messagebox "Cannot open " + fileName$ + "Error"
+		Exit Sub
+	End If
+	Call stream.Truncate
+	
+'# Export current database as DXL
+	Set exporter = session.CreateDXLExporter
+'# Set the input for the exporter
+	Call exporter.SetInput(col)
+'# Set the output for the exporter
+	Call exporter.SetOutput(stream)
+'# kick off the exporter process
+	Call exporter.Process
+	
+'# Get documents for loop
+	Set dc = db.AllDocuments
+	Set doc = dc.GetFirstDocument  
+	
+	CurrID = 100000 ' Just a counter to get unique names
+	
+	Open projectPath + |\| + xmlFolder + |\!| + xmlFolder + |.xml| For Output As 3 ' large XML
+	Open projectPath + |\| + txtFolder + |\!| + txtFolder + |.txt| For Output As 4 ' large TXT
+	Print #3, |<?xml version="1.0" standalone="yes"?>|             
+	
+	While Not doc Is Nothing
+		numDocs = numDocs + 1
+		
+		Open projectPath + |\| + xmlFolder + |\| + Cstr(CurrID) + |.xml| For Output As 1 ' 1:1 XML
+		Open projectPath + |\| + txtFolder + |\| + Cstr(CurrID) + |.txt| For Output As 2 ' 1:1 TXT
+		Print #1, |<?xml version="1.0" standalone="yes"?>|     
+		Print #1, strTab + |<| + strRecordsTxt + |>|
+		Print #1, strTab + |<record>| + Cstr(CurrID) + |</record>|             
+		Print #3, strTab + |<| + strRecordsTxt + |>|
+		Print #3, strTab + |<record>| + Cstr(CurrID) + |</record>|             
+		
+		Print #2, strRecordsTxt + |:| + strTab + Cstr(CurrID)
+		Print #4, strRecordsTxt + |:| + strTab + Cstr(CurrID)
+		
+		arrAttachmentNames = Evaluate("@AttachmentNames", doc)
+		For n = 0 To Ubound( arrAttachmentNames )
+			
+			
+			If arrAttachmentNames(n) Like "*.*"  Then                       ' Is file
+				Set attachment = doc.GetAttachment(arrAttachmentNames(n) )
+				
+				fileName=Cstr(CurrID)+"-"+arrAttachmentNames(n)
+				Print #1, strTab & strTab & |<| & strAttachmentTxt  & |>| & fileName & |</| & strAttachmentTxt & |>|
+				Print #3, strTab & strTab & |<| & strAttachmentTxt  & |>| & fileName & |</| & strAttachmentTxt & |>|                   
+				Print #2, strAttachmentTxt  & |:| & strTab & fileName
+				Print #4, strAttachmentTxt  & |:| & strTab & fileName
+				
+                                ' Extract file
+				Call    attachment.ExtractFile( projectPath & "\" & attachmentFolder & "\" & fileName)
+				numFiles = numFiles + 1 ' Count files
+			End If
+			
+		Next n
+		
+		allFieldNames = Evaluate("@DocFields", doc)
+		For k = 0 To Ubound( allFieldNames )
+			
+			If Not Isempty(doc.GetItemValue(allFieldNames(k))) Then
+				Print #1, strTab & strTab &  |<| & allFieldNames(k)  & |>| & doc.GetItemValue(allFieldNames(k))(0)&|</| & allFieldNames(k)  & |>|
+				Print #3, strTab & strTab &  |<| & allFieldNames(k)  & |>| & doc.GetItemValue(allFieldNames(k))(0)&|</| & allFieldNames(k)  & |>|
+				Print #2, allFieldNames(k)  & |:| & strTab & doc.GetItemValue(allFieldNames(k))(0)
+				Print #4, allFieldNames(k)  & |:| & strTab & doc.GetItemValue(allFieldNames(k))(0)
+			Else
+				Print #1, strTab & strTab & |<| & allFieldNames(k)  & |></| & allFieldNames(k)  & |>|                  
+				Print #3, strTab & strTab & |<| & allFieldNames(k)  & |></| & allFieldNames(k)  & |>|                  
+				Print #2, allFieldNames(k)  & |:|
+				Print #4, allFieldNames(k)  & |:|
+			End If
+			
+		Next k
+' Close XML
+		Print #1, strTab & |</| & strRecordsTxt  & |>| 
+		Print #1, |</xml>|     
+		Print #2, strForceFeed
+		
+		Close #1
+		Close #2
+		
+		Set doc = dc.GetNextDocument( doc )
+		CurrID = CurrID + 1
+	Wend
+	
+	Print #3, |</xml>|
+	Close #3
+	Close #4
+	
+	Open  projectPath & |\| & logFolder & |\| & strResultsLogName & |.xml| For Output As 1
+	Print #1, |<?xml version="1.0" standalone="yes"?>|     
+	Print #1, |<| & strResultsLogName & |>|
+	Print #1, strTab & strTab & |<| & strRecordsTxt & |>| & Cstr(numDocs) & |</| & strRecordsTxt & |>|
+	Print #1,  strTab & strTab  & |<| & strAttachmentTxt & |>| &  Cstr(numFiles) & |</| & strAttachmentTxt & |>|
+	Print #1,   strTab & strTab  & |<| & strErrorTxt & |>| &  strTab & Cstr(numErr) & |</| & strErrorTxt & |>|
+	Print #1, |</| & strResultsLogName & |>|
+	Print #1, |</xml>|     
+	Close #1
+	
+	If numErr > 0 Then
+		Open  projectPath + |\| + logFolder + |\| + strErrorLogName  +  |.xml| For Output As 1
+		Print #1, |<?xml version="1.0" standalone="yes"?>|             
+		Print #1, "" + strErrors +""
+		Print #1, |</xml>|
+		Close #1
+	End If
+	
+Done:
+	Exit Sub ' Skip  ErrorHanlder - if successfull
+ErrorHandler:
+	Select Case Err                
+	Case Else              
+'## Log and count Errors s
+		numErr = numErr + 1
+		strErrors = strErrors + strNewLine + strTab + strTab + |<| & strErrorTxt & |>| + Cstr(Err) + | | + strInTxt + | | + Cstr(thisAgent.Name) + | | + strOnLineTxt + |  | + Cstr(Erl) + |: | + Cstr(Error) +|</| & trErrorTxt & |>|        
+		Resume Done                                                            
+	End Select
+	
+End Sub
+
