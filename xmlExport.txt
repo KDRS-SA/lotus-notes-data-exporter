@@ -23,7 +23,7 @@ Option Explicit
 '# Constants    
 
 Const cstVersion = "A.1.1.1.a"
-Const cstVersionDate = "2012-11-09"
+Const cstVersionDate = "2012-11-11"
 Const cstVersionAuthor = "Torbjørn Aasen"
 Const cstVersionAuthorOrg = "Interkommunalt arkiv for Møre og Romsdal IKS"
 Const cstVersionAuthorEmail = "taa.database@gmail.com"
@@ -35,27 +35,27 @@ Const cstParentVersionAuthorOrg = "Bergen byarkiv"
 Const cstParentVersionAuthorEmail = "olav.mjelde@bergen.kommune.no"
 
 '##################### MUST SET THIS ##########################
-'#                                                                              Root export folder                                                                                              #
+'#                                                                              Root export folder                             
 '#############################################################
-Const	exportTarget = |D:\Export\LotusNotes\|           'For instance "D:\Byarkiv\\Eksport\" (remember trailing).
+Const	exportTarget = |C:\Export\LotusNotes\|           'For instance "C:\Export\LotusNotes\" (remember trailing).
                                                                                                'This folder MUST be present, otherwise the agent exits.
 
 '#################### SHOULD SET THIS #########################
-'#                                                                        Which formats to export                                                                            #
+'#                                                                        Which formats to export        
 '############################################################
 '# These apply to 99% of the users
-Const	exportXML = True                            ' Set to true if you want 1 XML per database            - rec.: True
-Const	exportTXT = True                             ' Set to true if you want 1 TXT per database            - rec.: True
+Const	exportXML = True                            ' Set to true if you want 1 XML per database		- rec.: True
+Const	exportTXT = True                             ' Set to true if you want 1 TXT per database		- rec.: True
 
 '# These apply for 1% of the users (much more work in the following migration steps)    
-Const	exportTXT11 = True                       ' Set to true if you want 1 TXT per document            - rec.: False
-Const	exportXML11 = True                      ' Set to true if you want 1 XML per document    - rec.: False   
+Const	exportTXT11 = True                       ' Set to true if you want 1 TXT per document		- rec.: False
+Const	exportXML11 = True                      ' Set to true if you want 1 XML per document		- rec.: False   
 
 '# Export empty tags? 
-Const	exportEmptyTags = True                  ' Huge dumps may need this set to false                 - rec.: True
-Const	exportAttachments = True                ' Your files/attachments, if any in the db.                     - rec.: True
+Const	exportEmptyTags = True                  ' Huge dumps may need this set to false			- rec.: True
+Const	exportAttachments = True                ' Your files/attachments, if any in the db.			- rec.: True
 '###################### CAN SET THIS ##########################
-'#                                                                           Name of subfoders                                                                                   #
+'#                                                                           Name of subfoders                            
 '############################################################
 '# Sub export folders - NO SLASHES!
 Const	xmlFolder = |xml| 							 ' For XML files 
@@ -64,8 +64,8 @@ Const	attachmentFolder = |filer|                     ' For attachments / files
 Const	logFolder = |logg|                                   ' For logs (error and result)
 
 '###################### CAN SET THIS ##########################
-' #                      Here you can modify the script for language, filenames, etc.                       # 
-' #                      Please do not use any slashes                                                                                                     # 
+' #                      Here you can modify the script for language, filenames, etc.          
+' #                      Please do not use any slashes                                                           
 ' ###########################################################
 '# Logging, file names, no extensions!
 Const	strErrorLogName = |avvik|				' The error log file name "error" (will only log when errors>0)
@@ -87,14 +87,15 @@ Dim uidoc As NotesUIDocument
 Dim session As NotesSession
 Dim db As NotesDatabase
 Dim doc As NotesDocument
-Dim col As NotesDocumentCollection
 Dim dc As NotesDocumentCollection
 Dim numFiles, numDocs, numErr, n, k, numFilesSaved As Integer
 Dim CurrID As Long     
 Dim attachment As NotesEmbeddedObject
 Dim arrAttachmentNames, allFieldNames, result As Variant
+Dim thisFieldName, modFieldName As Variant
 Dim strErrors, attachmentName, filename As String      
 Dim projectPath As String
+Dim bLoop As Integer
 
 ' Leftover after converting variables to constant (agent user-changable parameters moved to top)
 'Dim exportTarget, xmlFolder, dxlFolder, attachmentFolder, logFolder, projectPath, txtFolder, strSavedTxt As String
@@ -113,7 +114,6 @@ Sub Initialize
 	
 '# Set database and get documents collection
 	Set db = session.CurrentDatabase
-	Set col = db.UnprocessedDocuments
 	
 '#  Counters for logging, etc.
 	numFilesSaved = 0       
@@ -208,34 +208,46 @@ Sub Initialize
 		Next n
 		
 		allFieldNames = Evaluate("@DocFields", doc)
-		For k = 0 To Ubound( allFieldNames )
+		For k = 0 To Ubound( allFieldNames )	
+			' *** Change ***  Rewritten without using Replace function [to be Lotus Notes 5.x compatible]
+			' Earlier usage:  Replace(allFieldNames(k), "$", "")  			
+			thisFieldName = allFieldNames(k)
+			modFieldName = thisFieldName				
+			bLoop = True
+			While bLoop
+				If Not Left$(modFieldName, 1) = "$" Then
+					bLoop = False
+				Else
+					modFieldName = Mid$(modFieldName, 2)
+				End If		
+			Wend
 			
 			If Not Isempty(doc.GetItemValue(allFieldNames(k))) Then ' if the field has data
 				If exportXML11 Then  ' if set to export 1:1 xml (loose)                         
-					Print #1, strTab & strTab &  |<| & Replace(allFieldNames(k), "$", "")  & |>| & doc.GetItemValue(allFieldNames(k))(0)&|</| &  Replace(allFieldNames(k), "$", "")  & |>|
+					Print #1, strTab & strTab &  |<| & modFieldName  & |>| & doc.GetItemValue(allFieldNames(k))(0)&|</| & modFieldName  & |>|
 				End If
 				If exportXML Then  ' if set to export xml (combined)                            
-					Print #3, strTab & strTab &  |<| &  Replace(allFieldNames(k), "$", "")  & |>| & doc.GetItemValue(allFieldNames(k))(0)&|</| &  Replace(allFieldNames(k), "$", "")  & |>|
+					Print #3, strTab & strTab &  |<| &  modFieldName  & |>| & doc.GetItemValue(allFieldNames(k))(0)&|</| & modFieldName  & |>|
 				End If
 				If exportTXT11 Then  ' if set to export 1:1 txt (loose)                         
-					Print #2,  Replace(allFieldNames(k), "$", "")  & |:| & strTab & doc.GetItemValue(allFieldNames(k))(0)
+					Print #2,  modFieldName  & |:| & strTab & doc.GetItemValue(allFieldNames(k))(0)
 				End If
 				If exportTXT Then  ' if set to export txt (combined)                            
-					Print #4,  Replace(allFieldNames(k), "$", "")  & |:| & strTab & doc.GetItemValue(allFieldNames(k))(0)
+					Print #4,  modFieldName  & |:| & strTab & doc.GetItemValue(allFieldNames(k))(0)
 				End If
 			Else  ' if field has no data                            
 				If (exportEmptyTags) Then  ' if set to export empty tags (fields with no data)   
 					If exportXML11 Then      ' if set to export 1:1 xml (loose)                             
-						Print #1, strTab & strTab & |<| &  Replace(allFieldNames(k), "$", "")  & |></| &  Replace(allFieldNames(k), "$", "")  & |>|                 
+						Print #1, strTab & strTab & |<| &  modFieldName  & |></| &  modFieldName  & |>|                 
 					End If
 					If exportXML Then  ' if set to export xml (combined)                            
-						Print #3, strTab & strTab & |<| &  Replace(allFieldNames(k), "$", "")  & |></| &  Replace(allFieldNames(k), "$", "")  & |>| 
+						Print #3, strTab & strTab & |<| &  modFieldName  & |></| &  modFieldName  & |>| 
 					End If
 					If exportTXT11 Then  ' if set to export 1:1 txt (loose)                         
-						Print #2,  Replace(allFieldNames(k), "$", "")  & |:|
+						Print #2,  modFieldName  & |:|
 					End If
 					If exportTXT Then  ' if set to export txt (combined)                            
-						Print #4,  Replace(allFieldNames(k), "$", "")  & |:|
+						Print #4,  modFieldName  & |:|
 					End If
 				End If
 			End If
@@ -368,7 +380,4 @@ Public Function makeFolders()
 		End If
 	End If
 End Function
-Sub Terminate
-	
-End Sub
 

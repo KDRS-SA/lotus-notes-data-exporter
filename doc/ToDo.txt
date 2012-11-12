@@ -1,5 +1,7 @@
 ToDo.txt
 
-2012-11-09
-1. Rewrite xmlExport til support Lotus Notes 5.x (and still being compatible with Lotus Notes 6.5)
-2. Fix bug in dxlExport now moved into separate agent code.
+2012-11-11
+1. Merge into master branch - stable version xmlExport-A.1.1.1 and dxlExport-B.1.1.0
+2. Expand file/folder handling: Now exits without logging/warning if sub-folders below project exists (agent have been run before).
+   Maybe add date-time stamp top database subfolder created at time of export
+3. Add options for targeting spesific views/notes-document-fields and CSV-output flat files
