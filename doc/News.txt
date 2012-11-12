@@ -1,0 +1,15 @@
+News.txt
+
+2012-11-09
+
+Rewriting code:
+- Enable agent script to run on Lotus Notes 5.x (rewrite code only working with Lotus Notes 6.5 or newer)
+- Move dxl-export section into seperate agent-code (is not supported by Lotus Notes 6.5 and will not be used by default anyway)
+
+xmlExport ver A.1.1.1.a
+Removed dxl-export option from xmlExport.
+Test-result: OK.
+
+dxlExport ver B.1.0.0.a
+Moved dxl-export into separate lotus-script agent file.
+Test-result: bug ends agent. 

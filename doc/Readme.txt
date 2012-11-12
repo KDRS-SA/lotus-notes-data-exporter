@@ -1,7 +1,4 @@
-xmlExport ver 1.1 2012-11-05
-
-Agent script is compatible with Lotus Notes Client and Lotus Domino Server ver 6.5
-Not compatible with Lotus Notes ver 5 and earlier (new releases will be made supporting Lotus Notes ver 5 and maybe still earlier version of Lotus Notes if still available for testing).
+Readme.txt
 
 1. To add the Lotus Notes Data Exporter to your databases, first fire up the Lotus Notes Workspace.
 2. Find a database and open it in the designer.

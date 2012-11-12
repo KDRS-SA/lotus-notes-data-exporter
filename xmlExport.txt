@@ -1,10 +1,12 @@
-'xmlExport_A.1.1.0: 
+'xmlExport_A.1.1.1.a: 
 
 Option Explicit
+
 'xmlExport: 
 
+'   Subversion [Torbjørn Aasen / Interkommunalt Arkiv for Møre og Romsdal IKS]
 
-'   Copyright [2012] [ Olav Alexander Mjelde / Bergen Byarkiv ]
+'   Copyright [2012] [Olav Alexander Mjelde / Bergen Byarkiv]
 
 '   Licensed under the Apache License, Version 2.0 (the "License");
 '   you may not use this file except in compliance with the License.
@@ -19,21 +21,72 @@ Option Explicit
 '   limitations under the License.
 
 '# Constants    
-Const cstVersion = "A.1.1.1.0"
-Const cstVersionDate = "2012-11-05"
-Const cstVersionAuthor = "Olav Alexander Mjelde"
-Const cstVersionAuthorOrg = "Bergen byarkiv"
-Const cstVersionAuthorEmail = "olav.mjelde@bergen.kommune.no"
 
-'# Declare variables
+Const cstVersion = "A.1.1.1.a"
+Const cstVersionDate = "2012-11-09"
+Const cstVersionAuthor = "Torbjørn Aasen"
+Const cstVersionAuthorOrg = "Interkommunalt arkiv for Møre og Romsdal IKS"
+Const cstVersionAuthorEmail = "taa.database@gmail.com"
+
+Const cstParentVersion = "1.1"
+Const cstParentVersionDate = "2012-11-05"
+Const cstParentVersionAuthor = "Olav Alexander Mjelde"
+Const cstParentVersionAuthorOrg = "Bergen byarkiv"
+Const cstParentVersionAuthorEmail = "olav.mjelde@bergen.kommune.no"
+
+'##################### MUST SET THIS ##########################
+'#                                                                              Root export folder                                                                                              #
+'#############################################################
+Const	exportTarget = |D:\Export\LotusNotes\|           'For instance "D:\Byarkiv\\Eksport\" (remember trailing).
+                                                                                               'This folder MUST be present, otherwise the agent exits.
+
+'#################### SHOULD SET THIS #########################
+'#                                                                        Which formats to export                                                                            #
+'############################################################
+'# These apply to 99% of the users
+Const	exportXML = True                            ' Set to true if you want 1 XML per database            - rec.: True
+Const	exportTXT = True                             ' Set to true if you want 1 TXT per database            - rec.: True
+
+'# These apply for 1% of the users (much more work in the following migration steps)    
+Const	exportTXT11 = True                       ' Set to true if you want 1 TXT per document            - rec.: False
+Const	exportXML11 = True                      ' Set to true if you want 1 XML per document    - rec.: False   
+
+'# Export empty tags? 
+Const	exportEmptyTags = True                  ' Huge dumps may need this set to false                 - rec.: True
+Const	exportAttachments = True                ' Your files/attachments, if any in the db.                     - rec.: True
+'###################### CAN SET THIS ##########################
+'#                                                                           Name of subfoders                                                                                   #
+'############################################################
+'# Sub export folders - NO SLASHES!
+Const	xmlFolder = |xml| 							 ' For XML files 
+Const	txtFolder = |txt|                                        ' For TXT files
+Const	attachmentFolder = |filer|                     ' For attachments / files
+Const	logFolder = |logg|                                   ' For logs (error and result)
+
+'###################### CAN SET THIS ##########################
+' #                      Here you can modify the script for language, filenames, etc.                       # 
+' #                      Please do not use any slashes                                                                                                     # 
+' ###########################################################
+'# Logging, file names, no extensions!
+Const	strErrorLogName = |avvik|				' The error log file name "error" (will only log when errors>0)
+Const	strResultsLogName = |resultater|		' The results log file name "results" (will log documents, attachments and number of errors)
+Const	strExportLogName = |instillinger|		' The export settings log file name, will log boolean values,etc.
+
+'# Logging, field names 
+Const	strRecordsTxt = |r|					' The text for rootdocuments in the log file, also used in the XML "record" ( DO NOT CALL THIS DOCUMENT or Document!)  
+Const	strRecordsetTxt = |rs|				' The text for rootdocuments in the log file, also used in the XML "record" ( DO NOT CALL THIS DOCUMENT or Document!)  
+Const	strAttachmentTxt = |Filer|			' The text for Attachments/files in the log file "Files"
+Const	strSavedTxt = |Filer Lagret|		' The text for "Files Saved" 
+Const	strErrorTxt = |Feil|					' The text for Error in the log file "Errors"
+Const	strOnLineTxt = |på linje|			' For error logging "on line"
+Const	strInTxt = |i|							' For error logging "in" (error in)
 '# Declare variables
 Dim strTab, strNewLine, strForceFeed As String 
 Dim uidoc As NotesUIDocument
 
+Dim session As NotesSession
 Dim db As NotesDatabase
 Dim doc As NotesDocument
-Dim stream As NotesStream
-Dim exporter As NotesDXLExporter
 Dim col As NotesDocumentCollection
 Dim dc As NotesDocumentCollection
 Dim numFiles, numDocs, numErr, n, k, numFilesSaved As Integer
@@ -41,69 +94,22 @@ Dim CurrID As Long
 Dim attachment As NotesEmbeddedObject
 Dim arrAttachmentNames, allFieldNames, result As Variant
 Dim strErrors, attachmentName, filename As String      
-Dim exportTarget, xmlFolder, dxlFolder, attachmentFolder, logFolder, projectPath, txtFolder, strSavedTxt As String
-Dim strErrorLogName, strResultsLogName, strExportLogName, strRecordsTxt, strAttachmentTxt, strErrorTxt, strRecordsetTxt As String
-Dim exportXML11, exportXML, exportTXT11, exportTXT, exportDXL, exportAttachments, exportEmptyTags As Boolean
-Dim strInTxt, strOnLineTxt As String
+Dim projectPath As String
+
+' Leftover after converting variables to constant (agent user-changable parameters moved to top)
+'Dim exportTarget, xmlFolder, dxlFolder, attachmentFolder, logFolder, projectPath, txtFolder, strSavedTxt As String
+'Dim strErrorLogName, strResultsLogName, strExportLogName, strRecordsTxt, strAttachmentTxt, strErrorTxt, strRecordsetTxt As String
+'Dim exportXML11, exportXML, exportTXT11, exportTXT, exportDXL, exportAttachments, exportEmptyTags As Boolean
+'Dim strInTxt, strOnLineTxt As String
 
 Sub Initialize
-	Dim session As New NotesSession
-	
-'##################### MUST SET THIS ##########################
-'#                                                                              Root export folder                                                                                              #
-'#############################################################
-	exportTarget = |D:\Byarkiv\Eksport2\|           'For instance "D:\\Byarkiv\\Eksport\\" (remember trailing)
-	
-'#################### SHOULD SET THIS #########################
-'#                                                                        Which formats to export                                                                            #
-'############################################################
-'# These apply to 99% of the users
-	exportXML = True                                        ' Set to true if you want 1 XML per database            - rec.: True
-	exportTXT = True                                        ' Set to true if you want 1 TXT per database            - rec.: True
-	exportDXL        = False                                        ' Dump db to DXL (FULL XML DUMP)                        - rec.: True
-	
-'# These apply for 1% of the users (much more work in the following migration steps)    
-	exportTXT11 = False                             ' Set to true if you want 1 TXT per document            - rec.: False
-	exportXML11     = False                                 ' Set to true if you want 1 XML per document    - rec.: False   
-	
-'# Export empty tags? 
-	exportEmptyTags = True                  ' Huge dumps may need this set to false                 - rec.: True
-	exportAttachments = True                ' Your files/attachments, if any in the db.                     - rec.: True
-'###################### CAN SET THIS ##########################
-'#                                                                           Name of subfoders                                                                                   #
-'############################################################
-'# Sub export folders - NO SLASHES!
-	xmlFolder = |xml|                                                               ' For XML files 
-	txtFolder = |txt|                                                                       ' For TXT files
-	dxlFolder = |dxl|                                                                       ' For DXL dump of db
-	attachmentFolder = |filer|                                      ' For attachments / files
-	logFolder = |logg|                                                              ' For logs (error and result)
-	
-'###################### CAN SET THIS ##########################
-' #                      Here you can modify the script for language, filenames, etc.                       # 
-' #                      Please do not use any slashes                                                                                                     # 
-' ###########################################################
-'# Logging, file names, no extensions!
-	strErrorLogName = |avvik|                                       ' The error log file name "error" (will only log when errors>0)
-	strResultsLogName = |resultater|                        ' The results log file name "results" (will log documents, attachments and number of errors)
-	strExportLogName = |instillinger|                       ' The export settings log file name, will log boolean values,etc.
-'# Logging, field names 
-	strRecordsTxt = |r|                             ' The text for rootdocuments in the log file, also used in the XML "record" ( DO NOT CALL THIS DOCUMENT or Document!)  
-	strRecordsetTxt = |rs|                          ' The text for rootdocuments in the log file, also used in the XML "record" ( DO NOT CALL THIS DOCUMENT or Document!)  
-	strAttachmentTxt = |Filer|                                              ' The text for Attachments/files in the log file "Files"
-	strSavedTxt = |Filer Lagret|                                                    ' The text for "Files Saved" 
-	strErrorTxt = |Feil|                                                            ' The text for Error in the log file "Errors"
-	strOnLineTxt = |på linje|                                               ' For error logging "on line"
-	strInTxt = |i|                                                                          ' For error logging "in" (error in)
+	Set session = New NotesSession
 	
 '##########################################################
-'########                       No configuration below this part                                           ########
+'########                       No configuration below this part                  ########
 '##########################################################
 '######## Only self perceived experts should edit below this line ########
 '##########################################################
-	
-	
-	
 	
 '# Set database and get documents collection
 	Set db = session.CurrentDatabase
@@ -115,13 +121,10 @@ Sub Initialize
 	numErr = 0
 	numDocs = 0             
 	
-        ' Set the tab, the newline and forcefeed
+	' Set the tab, the newline and forcefeed
 	strTab = Chr$(9)
 	strNewLine = Chr$(10)
 	strForceFeed = Chr$(12)
-	
-'# Open xml file named after current database
-	Set stream = session.CreateStream
 	
 	On Error Goto ErrorHandler 
 	
@@ -130,34 +133,9 @@ Sub Initialize
 	projectPath = exportTarget & Left(db.FileName, Len(db.FileName) - 4) ' remove extension and . (dot)
 	result = makeFolders()
 	
-	
-	
 '#  Let's start by printing the settings log. If the script fails, this is a good place to start the debug :-)  
 	result = printSettingsLog()
 	
-	
-	
-	
-        ' This is for the DXL dump
-	If exportDXL Then
-		fileName$ =  projectPath + |\| + dxlFolder + |\| + Left(db.FileName, Len(db.FileName) - 3) + |dxl|
-		
-                ' TODO: Consider commenting out this code and check if it's needed (after all, we have the error checking)
-		If Not stream.Open(fileName$, "UTF-8") Then
-                        'Messagebox |Cannot open | + fileName$ + |Error|
-			Exit Sub
-		End If
-		Call stream.Truncate
-		
-        '# Export current database as DXL
-		Set exporter = session.CreateDXLExporter
-        '# Set the input for the exporter
-		Call exporter.SetInput(col)
-        '# Set the output for the exporter
-		Call exporter.SetOutput(stream)
-        '# kick off the exporter process
-		Call exporter.Process
-	End If
 '# Get documents for loop
 	Set dc = db.AllDocuments
 	Set doc = dc.GetFirstDocument   
@@ -171,7 +149,6 @@ Sub Initialize
 	If exportTXT Then  ' if set to export txt (combined)    
 		Open projectPath + |\| + txtFolder + |\| + Left(db.FileName, Len(db.FileName) - 4) + |.txt| For Output As 4 ' large TXT
 	End If
-	
 	
 	While Not doc Is Nothing
 		numDocs = numDocs + 1
@@ -195,7 +172,7 @@ Sub Initialize
 			Print #4, strRecordsTxt + |:| + strTab + Cstr(CurrID)
 		End If
 		
-                ' find attachments
+		' find attachments
 		arrAttachmentNames = Evaluate("@AttachmentNames", doc)
 		For n = 0 To Ubound( arrAttachmentNames )
 			
@@ -220,7 +197,7 @@ Sub Initialize
 					Print #4, strAttachmentTxt  & |:| & strTab & fileName
 				End If
 				
-                                ' Extract file
+				' Extract file
 				If exportAttachments Then  ' if set to export attachments (files)                               
 					Call    attachment.ExtractFile( projectPath & "\" & attachmentFolder & "\" & fileName)
 					numFilesSaved = numFilesSaved + 1 ' Count files extracted
@@ -315,13 +292,12 @@ ErrorHandler:
 	
 End Sub
 Public Function printSettingsLog()
-                '# Settings logfile     
-        ' The thought behind this is that one can send this file if a problem arises or someone else wishes to use the same parameters
+	'# Settings logfile     
+	' The thought behind this is that one can send this file if a problem arises or someone else wishes to use the same parameters
 	Open  projectPath + |\| + logFolder + |\| + strExportLogName + |.xml| For Output As 1
 	Print #1, |<?xml version="1.0" standalone="yes"?>|        
 	Print #1, strTab + |<settings scriptVersion="| + cstVersion  + |" versionDate="|  + cstVersionDate  + |" Author="| + cstVersionAuthor   + |" AuthorOrg="| + cstVersionAuthorOrg + |" authorEmail="| + cstVersionAuthorEmail + |">|
 	Print #1, strTab + strTab + |<export workfolder="| + exportTarget + |">|
-	Print #1,  strTab + strTab + strTab + |<dxl file="combined" target="|  + dxlFolder  + |\">| + Cstr(exportDXL) + |</dxl>|
 	Print #1,  strTab + strTab + strTab + |<xml file="combined" target="| + xmlFolder  + |\">|  + Cstr(exportXML) + |</xml>|
 	Print #1,  strTab + strTab + strTab + |<xml file="loose" target="| + xmlFolder  + |\1\">|  + Cstr(exportXML11) + |</xml>|
 	Print #1,  strTab + strTab + strTab + |<txt file="combined" target="| + txtFolder  + |\">|  + Cstr(exportTXT) + |</txt>|
@@ -350,7 +326,7 @@ Public Function printSettingsLog()
 	Close #1
 End Function
 Public Function printResultsLog()
-                '# Results file, this logs the count of documents, attachments and errors. It also displays version name of the script
+	'# Results file, this logs the count of documents, attachments and errors. It also displays version name of the script
 	Open  projectPath + |\| + logFolder + |\| + strResultsLogName + |.xml| For Output As 1
 	Print #1, |<?xml version="1.0" standalone="yes"?>|        
 	Print #1, strTab + |<| + strResultsLogName + | scriptVersion="| + cstVersion  + |" versionDate="|  + cstVersionDate  + |" Author="| + cstVersionAuthor   + |" AuthorOrg="| + cstVersionAuthorOrg + |" authorEmail="| + cstVersionAuthorEmail + |">|
@@ -370,25 +346,23 @@ Public Function printErrorLog()
 	Close #1
 End Function
 Public Function makeFolders()
- '#  Make folders for data extraction
-	Mkdir  projectPath                                                                                                              ' Root folder for export
-	Mkdir  projectPath + |\| + logFolder + |\|                                                      ' Log subfolder 
+ 	'#  Make folders for data extraction
+	Mkdir  projectPath													' Root folder for export
+	Mkdir  projectPath + |\| + logFolder + |\|						' Log subfolder 
 	
-	If exportDXL Then
-		Mkdir  projectPath + |\| + dxlFolder + |\|                                              ' DXL subfolder
-	End If
 	If exportAttachments Then
-		Mkdir  projectPath + |\| + attachmentFolder + |\|                       ' Attachment subfolder
+		Mkdir  projectPath + |\| + attachmentFolder + |\|		' Attachment subfolder
 	End If
 	
 	If exportXML Or exportXML11 Then        
-		Mkdir  projectPath + |\| + xmlFolder + |\|                                      ' XML subfolder
+		Mkdir  projectPath + |\| + xmlFolder + |\|				' XML subfolder
 		If exportXML11 Then
-			Mkdir  projectPath + |\| + xmlFolder + |\1\|                            ' XML subfolder
+			Mkdir  projectPath + |\| + xmlFolder + |\1\|			' XML subfolder
 		End If
 	End If
+	
 	If exportTXT Or exportTXT11 Then
-		Mkdir  projectPath + |\| + txtFolder + |\|                                              ' TXT subfolder
+		Mkdir  projectPath + |\| + txtFolder + |\|					' TXT subfolder
 		If exportTXT11 Then
 			Mkdir  projectPath + |\| + txtFolder + |\1\|
 		End If

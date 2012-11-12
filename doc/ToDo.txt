@@ -1,0 +1,5 @@
+ToDo.txt
+
+2012-11-09
+1. Rewrite xmlExport til support Lotus Notes 5.x (and still being compatible with Lotus Notes 6.5)
+2. Fix bug in dxlExport now moved into separate agent code.
