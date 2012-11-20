@@ -1,7 +1,17 @@
 ToDo.txt
 
-2012-11-11
-1. Merge into master branch - stable version xmlExport-A.1.1.1 and dxlExport-B.1.1.0
-2. Expand file/folder handling: Now exits without logging/warning if sub-folders below project exists (agent have been run before).
+Lotus Notes Data Exporter
+
+xmlExport A.1.2.0 2012-11-19
+
+ToDo list:
+1. Expand file/folder handling: Now exits without logging/warning if sub-folders below project exists (agent have been run before).
    Maybe add date-time stamp top database subfolder created at time of export
-3. Add options for targeting spesific views/notes-document-fields and CSV-output flat files
+2. Add options for targeting spesific views/notes-document-fields and CSV-output flat files
+3. Simplify switch between Lotus Notes/Domino ver 6.5 and 5.x
+4. Test with Lotus Notes/Domino lower than ver 4.x.
+5. Field analysis (fieldname, length, type etc.) supporting generation of ADDML.
+6. XML-schema generator based upon record/fields output (can be used for validation og generated XML's).
+7. More counters describing database and records encountered.
+8. Improved debug and error-handling and reports
+9. More informative logging in AgentLog for informative report after manual started agent.

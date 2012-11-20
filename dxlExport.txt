@@ -1,12 +1,9 @@
-'dxlExport_B.1.0.0.a: 
+'dxlExport_B.1.0.0: 
 
 Option Explicit
 
-'dxlExport: 
-
-'   [Torbjørn Aasen / Interkommunalt Arkiv for Møre og Romsdal IKS]
-
 '   Copyright [2012] [Olav Alexander Mjelde / Bergen Byarkiv]
+'   [Torbjørn Aasen / Interkommunalt Arkiv for Møre og Romsdal IKS]
 
 '   Licensed under the Apache License, Version 2.0 (the "License");
 '   you may not use this file except in compliance with the License.
@@ -20,19 +17,30 @@ Option Explicit
 '   See the License for the specific language governing permissions and
 '   limitations under the License.
 
+' COMPATIBLE/TESTED WITH LOTUS NOTES/DOMINO VER 6.5 ONLY
+
 '# Constants    
 
-Const cstVersion = "B.1.0.0.a"
-Const cstVersionDate = "2012-11-11"
-Const cstVersionAuthor = "Torbjørn Aasen"
-Const cstVersionAuthorOrg = "Interkommunalt arkiv for Møre og Romsdal IKS"
-Const cstVersionAuthorEmail = "taa.database@gmail.com"
+'###################### VERSION ###############################
+'#  							          Version number and date
+'#############################################################
+Const cstVersion = |A.1.2.0|
+Const cstVersionDate = |2012-11-19|
+Const cstVersionInfo = |DXL single export (no XML data-export). Supporting Lotus Notes/Domino 6.5.|
 
-Const cstParentVersion = "1.1"
-Const cstParentVersionDate = "2012-11-09"
-Const cstParentVersionAuthor = "Olav Alexander Mjelde"
-Const cstParentVersionAuthorOrg = "Bergen byarkiv"
-Const cstParentVersionAuthorEmail = "olav.mjelde@bergen.kommune.no"
+'###################### AUTHORS SECTION ######################
+'#            Additional co-authors to be added below with incremented id number
+'#############################################################
+Const cstAuthors = |			<Author id="1">
+				<AuthorName>Olav Alexander Mjelde</AuthorName>
+				<AuthorOrg>Bergen byarkiv</AuthorOrg>
+				<AuthorEmail>olav.mjelde@bergen.kommune.no</AuthorEmail>
+			</Author>
+			<Author id="2">
+				<AuthorName>Torbjørn Aasen</AuthorName>
+				<AuthorOrg>Interkommunalt arkiv for Møre og Romsdal IKS</AuthorOrg>
+				<AuthorEmail>taa.database@gmail.com</AuthorEmail>
+			</Author>|
 
 '##################### MUST SET THIS ##########################
 '#                                                                              Root export folder                           
@@ -43,7 +51,10 @@ Const	exportTarget = |C:\Export\LotusNotesDxl\|           'For instance "C:\Expo
 '#################### SHOULD SET THIS #########################
 '#                                                                        Which formats to export                       
 '############################################################
-Const	exportDXL        = True                    ' Dump db to DXL (FULL XML DUMP)		- rec.: True
+Const	exportDXL = True				' Dump db to DXL (FULL XML DUMP)		- rec.: True
+
+'Const	bCharset = True						' = True; Use selected char-set  on "open file". Supported by Lotus Notes/Domino ver 6.5 only. = False for earlier versions.
+Const	cstCharset = "UTF-8"			' Choices = "UTF-8" | = "ISO-8859-1" | ...
 
 '###################### CAN SET THIS ##########################
 '#                                                                           Name of subfoders                           
@@ -57,18 +68,16 @@ Const	logFolder = |dxl-logg|								' For logs (error and result)
 ' #                      Please do not use any slashes                                                        
 ' ###########################################################
 '# Logging, file names, no extensions!
-Const	strErrorLogName = |avvik|							' The error log file name "error" (will only log when errors>0)
-Const	strResultsLogName = |resultater|					' The results log file name "results" (will log documents, attachments and number of errors)
-Const	strExportLogName = |instillinger|					' The export settings log file name, will log boolean values,etc.
+Const	strErrorLogName = |Errors|				' The error log file name "error" (will only log when errors>0)
+Const	strResultsLogName = |Results|		' The results log file name "results" (will log documents, attachments and number of errors)
+Const	strExportLogName = |Settings|		' The export settings log file name, will log boolean values,etc.
 
 '# Logging, field names 
-Const	strRecordsTxt = |r|							' The text for rootdocuments in the log file, also used in the XML "record" ( DO NOT CALL THIS DOCUMENT or Document!)  
-Const	strRecordsetTxt = |rs|						' The text for rootdocuments in the log file, also used in the XML "record" ( DO NOT CALL THIS DOCUMENT or Document!)  
-Const	strAttachmentTxt = |Filer|					' The text for Attachments/files in the log file "Files"
-Const	strSavedTxt = |Filer Lagret|				' The text for "Files Saved" 
-Const	strErrorTxt = |Feil|							' The text for Error in the log file "Errors"
-Const	strOnLineTxt = |på linje|					' For error logging "on line"
-Const	strInTxt = |i|									' For error logging "in" (error in)
+Const	strErrorTxt = |Error|					' The text for Error in the log file "Errors"
+Const	strOnLineTxt = |on line|			' For error logging "on line"
+Const	strInTxt = |in|							' For error logging "in" (error in)
+
+'################## END OF CONSTANTS SECTION  ##########################
 '# Declare variables
 Dim strTab, strNewLine, strForceFeed As String 
 Dim uidoc As NotesUIDocument
@@ -79,6 +88,7 @@ Dim doc As NotesDocument
 Dim col As NotesDocumentCollection
 Dim stream As NotesStream
 Dim exporter As NotesDXLExporter
+Dim thisCharSet As String
 
 Dim numFiles, numDocs, numErr, n, k, numFilesSaved As Integer
 Dim CurrID As Long     
@@ -109,7 +119,9 @@ Sub Initialize
 	numFilesSaved = 0       
 	numFiles = 0
 	numErr = 0
-	numDocs = 0             
+	numDocs = 0     
+	
+	thisCharset = cstCharset
 	
 	' Set the tab, the newline and forcefeed
 	strTab = Chr$(9)
@@ -134,7 +146,7 @@ Sub Initialize
 		fileName$ =  projectPath + |\| + dxlFolder + |\| + Left(db.FileName, Len(db.FileName) - 3) + |dxl|
 		
        	' TODO: Consider commenting out this code and check if it's needed (after all, we have the error checking)
-		If Not stream.Open(fileName$, "UTF-8") Then
+		If Not stream.Open(fileName$, thisCharset) Then
             	'Messagebox |Cannot open | + fileName$ + |Error|
 			Exit Sub
 		End If
@@ -174,50 +186,54 @@ End Sub
 Public Function printSettingsLog()
 	'# Settings logfile     
 	' The thought behind this is that one can send this file if a problem arises or someone else wishes to use the same parameters
-	Open  projectPath + |\| + logFolder + |\| + strExportLogName + |.xml| For Output As 1
-	Print #1, |<?xml version="1.0" standalone="yes"?>|        
-	Print #1, strTab + |<settings scriptVersion="| + cstVersion  + |" versionDate="|  + cstVersionDate  + |" Author="| + cstVersionAuthor   + |" AuthorOrg="| + cstVersionAuthorOrg + |" authorEmail="| + cstVersionAuthorEmail + |">|
-	Print #1, strTab + strTab + |<export workfolder="| + exportTarget + |">|
-	Print #1,  strTab + strTab + strTab + |<dxl file="combined" target="|  + dxlFolder  + |\">| + Cstr(exportDXL) + |</dxl>|    
-	Print #1,  strTab + strTab + strTab + |<log file="combined" type="error" name="| + strErrorLogName + |.xml" target="| + logFolder  + |\">True</log>|
-	Print #1,  strTab + strTab + strTab + |<log file="combined" type="results" name="| + strResultsLogName + |.xml" target="| + logFolder  + |\">True</log>|
-	Print #1,  strTab + strTab + strTab + |<log file="combined" type="exportsettings" name="| + strExportLogName + |.xml" target="| + logFolder  + |\">True</log>|
-	Print #1, strTab + strTab + |</export>|
+	Open  projectPath + |\| + logFolder + |\| + strExportLogName + |.xml| For Output As 1 Charset=thisCharset
 	
-	Print #1, strTab + strTab +|<globalization>|      
-	Print #1,  strTab + strTab + strTab  + |<recordsTxt>| + strRecordsTxt + |</recordsTxt>|
-	Print #1,  strTab + strTab + strTab  + |<attachmentTxt>| + strAttachmentTxt + |</attachmentTxt>|
-	Print #1,  strTab + strTab + strTab  + |<errorTxt>| + strErrorTxt + |</errorTxt>|
-	Print #1,  strTab + strTab + strTab  + |<onLineTxt>| + strOnLineTxt + |</onLineTxt>|
-	Print #1,  strTab + strTab + strTab  + |<inTxt>| + strInTxt + |</inTxt>|
-	Print #1,  strTab + strTab + strTab  + |<savedTxt>| + strSavedTxt + |</savedTxt>|
-	Print #1, strTab + strTab +|</globalization>|     
+	Print #1, |<?xml version="1.0" encoding="| + thisCharset + |" standalone="yes"?>|
+	Print #1, |<settings>|
 	
-	Print #1, strTab + strTab +|<tags>|       
-	Print #1, strTab + strTab +|</tags>|              
+	' <runningCode>
+	Print #1, strTab + |<runningCode type="Lotus Script">|
+	Print #1, strTab + strTab + |<version versionNumber="| + cstVersion + |" versionDate=" | + cstVersionDate + |">|
+	Print #1, strTab + strTab + strTab + |<versionNumber>| + cstVersion + |</versionNumber>|
+	Print #1, strTab + strTab + strTab + |<versionDate>| + cstVersionDate + |</versionDate>|
+	Print #1, strTab + strTab + strTab + |<versionInfo>| + cstVersionInfo + |</versionInfo>|
+	If Not cstAuthors = "" Then
+		Print #1, cstAuthors
+	End If
+	Print #1, strTab + strTab + |</version>|	
+	Print #1, strTab + |</runningCode>|
 	
-	Print #1, strTab + |</settings>|
-	Print #1, |</xml>|        
+	' <export>
+	Print #1, strTab + |<export workfolder="| + exportTarget + |">|   
+	Print #1, strTab + strTab + |<dxl file="combined" target="|  + dxlFolder  + |\">| + Cstr(exportDXL) + |</dxl>|    
+	Print #1, strTab + strTab + |<log file="combined" type="error" name="| + strErrorLogName + |.xml" target="| + logFolder  + |\">True</log>|
+	Print #1, strTab + strTab + |<log file="combined" type="results" name="| + strResultsLogName + |.xml" target="| + logFolder  + |\">True</log>|
+	Print #1, strTab + strTab + |<log file="combined" type="exportsettings" name="| + strExportLogName + |.xml" target="| + logFolder  + |\">True</log>|
+	Print #1, strTab + |</export>|       
+	
+	Print #1, |</settings>|
+	
 	Close #1
 End Function
 Public Function printResultsLog()
 	'# Results file, this logs the count of documents, attachments and errors. It also displays version name of the script
-	Open  projectPath + |\| + logFolder + |\| + strResultsLogName + |.xml| For Output As 1
-	Print #1, |<?xml version="1.0" standalone="yes"?>|        
-	Print #1, strTab + |<| + strResultsLogName + | scriptVersion="| + cstVersion  + |" versionDate="|  + cstVersionDate  + |" Author="| + cstVersionAuthor   + |" AuthorOrg="| + cstVersionAuthorOrg + |" authorEmail="| + cstVersionAuthorEmail + |">|
-	Print #1, strTab + strTab + |<| + strRecordsTxt + |>| + Cstr(numDocs) + |</| + strRecordsTxt + |>|
-	Print #1,  strTab + strTab  + |<| + strAttachmentTxt + |>| +  Cstr(numFiles) + |</| + strAttachmentTxt + |>|
-	Print #1,  strTab + strTab  + |<| + strSavedTxt + |>| +  Cstr(numFilesSaved) + |</| + strSavedTxt + |>|
-	Print #1,  strTab + strTab  + |<| + strErrorTxt + |>| +  Cstr(numErr) + |</| + strErrorTxt + |>|
-	Print #1, strTab + |</| + strResultsLogName + |>|
-	Print #1, |</xml>|        
-	Close #1
+	Open  projectPath + |\| + logFolder + |\| + strResultsLogName + |.xml| For Output As 1 Charset=thisCharset
+	
+	Print #1, |<?xml version="1.0" encoding="| + thisCharset + |" standalone="yes"?>|
+	Print #1, |<| + strResultsLogName + |>|	
+	
+	Print #1, strTab  + |<| + strErrorTxt + |>| +  Cstr(numErr) + |</| + strErrorTxt + |>|
+	
+	Print #1, |</| + strResultsLogName + |>|	
+	
+	Close #1	
 End Function
 Public Function printErrorLog()
-	Open  projectPath + |\| + logFolder + |\| + strErrorLogName  +  |.xml| For Output As 1
-	Print #1, |<?xml version="1.0" encoding="UTF-8"?>|                
+	Open  projectPath + |\| + logFolder + |\| + strErrorLogName  +  |.xml| For Output As 1 Charset = thisCharSet
+	
+	Print #1, |<?xml version="1.0" encoding="| + thisCharset + |" standalone="yes"?>|
 	Print #1, "" + strErrors +""
-	Print #1, |</xml>|
+	
 	Close #1
 End Function
 Public Function makeFolders()

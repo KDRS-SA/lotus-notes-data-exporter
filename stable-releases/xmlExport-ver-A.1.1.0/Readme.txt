@@ -1,4 +1,8 @@
-xmlExport ver 1.1 2012-11-05
+Readme.txt
+
+Lotus Notes Data Exporter
+
+xmlExport ver A.1.1.0 2012-11-05
 
 Agent script is compatible with Lotus Notes Client and Lotus Domino Server ver 6.5
 Not compatible with Lotus Notes ver 5 and earlier (new releases will be made supporting Lotus Notes ver 5 and maybe still earlier version of Lotus Notes if still available for testing).

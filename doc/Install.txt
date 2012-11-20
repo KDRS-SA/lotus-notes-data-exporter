@@ -1,2 +1,10 @@
 Install.txt
 
+Lotus Notes Data Exporter
+
+For Lotus Notes 6.5 use:
+- xmlExport.txt
+- dxlExport.txt
+
+For Lotus Notes 5.x use:
+- xmlExport.txt xmlExport-A.1.2.0_Notes-5.x.txt  (same version, but  modified parameters and a few lines marked as text)

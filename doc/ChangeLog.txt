@@ -1,9 +1,11 @@
 ChangeLog.txt
 
+Lotus Notes Data Exporter
+
 xmlExport
-A.1.1.1.a	2012-11-09	Compatible with Lotus Notes 5.x up to 6.5. First version without dxl-option. Tested OK.
+A.1.2.0		2012-11-19	Compatible with Lotus Notes 5.x up to 6.5. First version without dxl-option.
 A.1.1.0		2012-11-05	Bugfix ending tags (originally named 1.1).
 A.1.0.0		2012-10-26	First release (orignally named 1.0). Bug: missing ending tags.
 
 dxlExport
-B.1.0.0.a	2012-11-09	dxlExport moved into separate agent code. Only compatible with Lotus Notes ver 6.5
+B.1.0.0		2012-11-19	DXL single export (no XML data-export). Supporting Lotus Notes/Domino ver 6.5 only.

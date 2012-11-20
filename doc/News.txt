@@ -1,17 +1,20 @@
 News.txt
 
-2012-11-11
+Lotus Notes Data Exporter
+
+Ver A.1.2.0 2012-11-19
 
 Rewriting code:
-- Enabled agent script to run on Lotus Notes from version 5.x up to 6.5(initial code only compatible with Lotus Notes 6.5)
-- Moved dxl-export section into seperate agent-code (is only supported by Lotus Notes 6.5 and will not be used by default anyway)
+- Enabled agent script to run on Lotus Notes from version 5.x up to 6.5 (previously release only compatible with Lotus Notes 6.5).
+- Moved dxl-export section into seperate Lotus Script agent (DXL supported by Lotus Notes/Domino ver 6.5 only).
 
-xmlExport ver A.1.1.1.a
-- Compatible with Lotus Notes ver 5.x up to 6.5
+xmlExport ver A.1.2.0
+- Compatible with Lotus Notes ver 5.x up to 6.5. Not tested with ver 4.x or earlier.
 - Removed dxl-export option from xmlExport.
-- Test-result: OK.
+- xmlExport-A.1.2.0_Notes-5.x.txt  parameters & text markout set ready for Lotus Notes/Domino ver 5.x.
+- xmlExport.txt  parameters set ready for Lotus Notes/Domino ver 6.4 (default)
 
-dxlExport ver B.1.0.0.a
-- Only compatible with Lotus Notes 6.5
-- Moved dxl-export into separate lotus-script agent file.
-- Test-result: OK
+dxlExport ver B.1.0.0
+- DXL single export (no XML data-export with this script).
+- Compatible with Lotus Notes/Domino ver 6.5 only.
+- dxlExport.txt  parameters set ready for usage.

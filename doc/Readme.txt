@@ -1,5 +1,7 @@
 Readme.txt
 
+Lotus Notes Data Exporter
+
 1. To add the Lotus Notes Data Exporter to your databases, first fire up the Lotus Notes Workspace.
 2. Find a database and open it in the designer.
 3. Open up the tree structure [+]Shared code -> [+]Agents
@@ -16,7 +18,7 @@ Readme.txt
 Regarding what to edit, you will see it quite well commented.
 You will have to set the export target and that target must be prepared (create folders)
 
-	exportTarget = |D:\Byarkiv\Eksport\|   
+	exportTarget = |C:\Export\LotusNotes\|   
 	
 This you can set to what suits you, like f:\myexport\project1\ or what ever.
 Just know that the path must work before you run the script.
