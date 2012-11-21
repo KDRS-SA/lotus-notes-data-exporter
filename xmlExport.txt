@@ -206,7 +206,7 @@ Sub Initialize
 			End If
 			
 			Print #1, |<?xml version="1.0"  encoding="| + thisCharset + |"?>|
-			Print #1, strTab + |<| + strRecordsTxt + | id="| +  Cstr(CurrID) + |">|
+			Print #1, |<| + strRecordsTxt + | id="| +  Cstr(CurrID) + |">|
 		End If          
 		
 		If exportTXT11 Then  ' if set to export 1:1 txt (loose) 
@@ -240,7 +240,7 @@ Sub Initialize
 				fileName=Cstr(CurrID)+"-"+arrAttachmentNames(n)
 				
 				If exportXML11 Then ' if set to export 1:1 xml (loose)                          
-					Print #1, strTab & strTab & |<| & strAttachmentTxt  & |>| & fileName & |</| & strAttachmentTxt & |>|
+					Print #1, strTab & |<| & strAttachmentTxt  & |>| & fileName & |</| & strAttachmentTxt & |>|
 				End If                          
 				
 				If exportXML Then  ' if set to export xml (combined)                            
@@ -282,7 +282,7 @@ Sub Initialize
 			
 			If Not Isempty(doc.GetItemValue(allFieldNames(k))) Then ' if the field has data
 				If exportXML11 Then  ' if set to export 1:1 xml (loose)                         
-					Print #1, strTab & strTab &  |<| & modFieldName  & |>| & doc.GetItemValue(allFieldNames(k))(0)&|</| & modFieldName  & |>|
+					Print #1, strTab &  |<| & modFieldName  & |>| & doc.GetItemValue(allFieldNames(k))(0)&|</| & modFieldName  & |>|
 				End If
 				If exportXML Then  ' if set to export xml (combined)                            
 					Print #3, strTab & strTab &  |<| &  modFieldName  & |>| & doc.GetItemValue(allFieldNames(k))(0)&|</| & modFieldName  & |>|
@@ -296,7 +296,7 @@ Sub Initialize
 			Else  ' if field has no data                            
 				If (exportEmptyTags) Then  ' if set to export empty tags (fields with no data)   
 					If exportXML11 Then      ' if set to export 1:1 xml (loose)                             
-						Print #1, strTab & strTab & |<| &  modFieldName  & |></| &  modFieldName  & |>|                 
+						Print #1, strTab & |<| &  modFieldName  & |></| &  modFieldName  & |>|                 
 					End If
 					If exportXML Then  ' if set to export xml (combined)                            
 						Print #3, strTab & strTab & |<| &  modFieldName  & |></| &  modFieldName  & |>| 
@@ -314,7 +314,7 @@ Sub Initialize
 		
 '#  Close XML and txt for the 1:1 files, the combined gets closed outside the loop
 		If exportXML11 Then  ' if set to export 1:1 xml (loose)                         
-			Print #1, strTab & |</| & strRecordsTxt  & |>|
+			Print #1, |</| & strRecordsTxt  & |>|
 			Close #1
 		End If
 		If exportTXT11 Then  ' if set to export 1:1 txt (loose) 

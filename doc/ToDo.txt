@@ -5,8 +5,7 @@ Lotus Notes Data Exporter
 xmlExport A.1.2.0 2012-11-19
 
 ToDo list:
-1. Expand file/folder handling: Now exits without logging/warning if sub-folders below project exists (agent have been run before).
-   Maybe add date-time stamp top database subfolder created at time of export
+1. Expand file/folder handling: Now exits without logging/warning if sub-folders below project exists (agent have been run before). Maybe add date-time stamp top database subfolder created at time of export
 2. Add options for targeting spesific views/notes-document-fields and CSV-output flat files
 3. Simplify switch between Lotus Notes/Domino ver 6.5 and 5.x
 4. Test with Lotus Notes/Domino lower than ver 4.x.
@@ -14,4 +13,5 @@ ToDo list:
 6. XML-schema generator based upon record/fields output (can be used for validation og generated XML's).
 7. More counters describing database and records encountered.
 8. Improved debug and error-handling and reports
-9. More informative logging in AgentLog for informative report after manual started agent.
+9. More informative logging in AgentLog for informative report after manual started agent
+10. Add functionality for replacing illegal XML-characters with their equivalent entities.
