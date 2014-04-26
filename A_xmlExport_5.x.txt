@@ -1,4 +1,4 @@
-'xmlExport-A.1.2.0_Notes-5.x: 
+'xmlExport_A.1.2.0_Notes-5.x: 
 
 Option Explicit
 
@@ -125,7 +125,6 @@ Dim bLoop As Integer
 'Dim strErrorLogName, strResultsLogName, strExportLogName, strRecordsTxt, strAttachmentTxt, strErrorTxt, strRecordsetTxt As String
 'Dim exportXML11, exportXML, exportTXT11, exportTXT, exportDXL, exportAttachments, exportEmptyTags As Boolean
 'Dim strInTxt, strOnLineTxt As String
-
 
 
 Sub Initialize
@@ -480,4 +479,3 @@ Public Function makeFolders()
 		End If
 	End If
 End Function
-

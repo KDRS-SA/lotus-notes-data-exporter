@@ -1,4 +1,4 @@
-'xmlExport_A.1.2.0: 
+'xmlExport_A.1.2.0_Notes-5.x: 
 
 Option Explicit
 
@@ -18,7 +18,8 @@ Option Explicit
 '   limitations under the License.
 
 '  COMPATIBLE/TESTED WITH LOTUS NOTES/DOMINO VER 6.5
-'  USAGE WITH VER 5.x IS POSSIBLE - TEXT MARKOUT OF CHARSET= STATMENT ID NEEDED
+'  THIS FILE HAS PARAMETERS SET FOR LOTUS NOTES/DOMINO VER 5.x COMPABILITY
+'  (SOME LINES MARKED OUT AS TEXT TO ALLOW LOTUS SCRIPT TO RUN IN THIS VERSION OF NOTES/DOMINO)
 
 '# Constants    
 
@@ -64,7 +65,7 @@ Const	exportXML11 = True                      ' Set to true if you want 1 XML pe
 Const	exportEmptyTags = True			' Huge dumps may need this set to false			- rec.: True
 Const	exportAttachments = True		' Your files/attachments, if any in the db.			- rec.: True
 
-Const	bCharset = True						' = True; Use selected char-set  on "open file". Supported by Lotus Notes/Domino ver 6.5 only. = False for earlier versions.
+Const	bCharset = False					' = True; Use selected char-set  on "open file". Supported by Lotus Notes/Domino ver 6.5 only. = False for earlier versions.
 Const	cstCharset = "UTF-8"				' Choices = "UTF-8" | = "ISO-8859-1" | ...
 
 '###################### CAN SET THIS ##########################
@@ -100,8 +101,6 @@ Const	strInTxt = |in|							' For error logging "in" (error in)
 Const	InitCurrID = 100000 	' Record (Notes Document) counter to keep unique names
 
 '################## END OF CONSTANTS SECTION  ##########################
-
-
 '# Declare variables
 Dim strTab, strNewLine, strForceFeed As String 
 Dim uidoc As NotesUIDocument
@@ -171,7 +170,7 @@ Sub Initialize
 		If bCharset	Then
 			' SWITCH - use for Lotus Notes/Domino ver 6.5
 			' MARK LINE BELOW AS COMMENT - when Lotus Script is running on Lotus Notes/Domin ver 5.x
-			Open projectPath + |\| + xmlFolder + |\| + Left(db.FileName, Len(db.FileName) - 4) + |.xml| For Output As 3 Charset=thisCharset
+'#			Open projectPath + |\| + xmlFolder + |\| + Left(db.FileName, Len(db.FileName) - 4) + |.xml| For Output As 3 Charset=thisCharset
 		Else			
 			' SWITCH - use for Lotus Notes/Domino ver 5.x
 			Open projectPath + |\| + xmlFolder + |\| + Left(db.FileName, Len(db.FileName) - 4) + |.xml| For Output As 3			
@@ -185,7 +184,7 @@ Sub Initialize
 		If bCharset	Then
 			' SWITCH - use for Lotus Notes/Domino ver 6.5
 			' MARK LINE BELOW AS COMMENT - when Lotus Script is running on Lotus Notes/Domin ver 5.x
-			Open projectPath + |\| + txtFolder + |\| + Left(db.FileName, Len(db.FileName) - 4) + |.txt| For Output As 4 Charset=thisCharset
+'#			Open projectPath + |\| + txtFolder + |\| + Left(db.FileName, Len(db.FileName) - 4) + |.txt| For Output As 4 Charset=thisCharset
 		Else
 			' SWITCH - use for Lotus Notes/Domino ver 5.x
 			Open projectPath + |\| + txtFolder + |\| + Left(db.FileName, Len(db.FileName) - 4) + |.txt| For Output As 4
@@ -199,7 +198,7 @@ Sub Initialize
 			If bCharset	Then
 				' SWITCH - use for Lotus Notes/Domino ver 6.5
 				' MARK LINE BELOW AS COMMENT - when Lotus Script is running on Lotus Notes/Domin ver 5.x
-				Open projectPath + |\| + xmlFolder + |\1\| + Cstr(CurrID) + |.xml| For Output As 1 Charset=thisCharset
+'#				Open projectPath + |\| + xmlFolder + |\1\| + Cstr(CurrID) + |.xml| For Output As 1 Charset=thisCharset
 			Else
 				' SWITCH - use for Lotus Notes/Domino ver 5.x			
 				Open projectPath + |\| + xmlFolder + |\1\| + Cstr(CurrID) + |.xml| For Output As 1
@@ -213,7 +212,7 @@ Sub Initialize
 			If bCharset	Then
 				' SWITCH - use for Lotus Notes/Domino ver 6.5
 				' MARK LINE BELOW AS COMMENT - when Lotus Script is running on Lotus Notes/Domin ver 5.x
-				Open projectPath + |\| + txtFolder + |\1\| + Cstr(CurrID) + |.txt| For Output As 2 Charset=thisCharset
+'#				Open projectPath + |\| + txtFolder + |\1\| + Cstr(CurrID) + |.txt| For Output As 2 Charset=thisCharset
 			Else
 				' SWITCH - use for Lotus Notes/Domino ver 5.x						
 				Open projectPath + |\| + txtFolder + |\1\| + Cstr(CurrID) + |.txt| For Output As 2
@@ -366,7 +365,7 @@ Public Function printSettingsLog()
 	If bCharset	Then
 		' SWITCH - use for Lotus Notes/Domino ver 6.5
 		' MARK LINE BELOW AS COMMENT - when Lotus Script is running on Lotus Notes/Domin ver 5.x
-		Open  projectPath + |\| + logFolder + |\| + strExportLogName + |.xml| For Output As 1 Charset=thisCharset
+'#		Open  projectPath + |\| + logFolder + |\| + strExportLogName + |.xml| For Output As 1 Charset=thisCharset
 	Else
 		' SWITCH - use for Lotus Notes/Domino ver 5.x
 		Open  projectPath + |\| + logFolder + |\| + strExportLogName + |.xml| For Output As 1
@@ -424,7 +423,7 @@ Public Function printResultsLog()
 	If bCharset	Then
 		' SWITCH - use for Lotus Notes/Domino ver 6.5
 		' MARK LINE BELOW AS COMMENT - when Lotus Script is running on Lotus Notes/Domin ver 5.x
-		Open  projectPath + |\| + logFolder + |\| + strResultsLogName + |.xml| For Output As 1 Charset=thisCharset
+'#		Open  projectPath + |\| + logFolder + |\| + strResultsLogName + |.xml| For Output As 1 Charset=thisCharset
 	Else
 		' SWITCH - use for Lotus Notes/Domino ver 5.x
 		Open  projectPath + |\| + logFolder + |\| + strResultsLogName + |.xml| For Output As 1
@@ -446,7 +445,7 @@ Public Function printErrorLog()
 	If bCharset	Then
 		' SWITCH - use for Lotus Notes/Domino ver 6.5
 		' MARK LINE BELOW AS COMMENT - when Lotus Script is running on Lotus Notes/Domin ver 5.x
-		Open  projectPath + |\| + logFolder + |\| + strErrorLogName + |.xml| For Output As 1 Charset = thisCharSet
+'#		Open  projectPath + |\| + logFolder + |\| + strErrorLogName + |.xml| For Output As 1 Charset = thisCharSet
 	Else
 		' SWITCH - use for Lotus Notes/Domino ver 5.x
 		Open  projectPath + |\| + logFolder + |\| + strErrorLogName + |.xml| For Output As 1	
@@ -480,4 +479,3 @@ Public Function makeFolders()
 		End If
 	End If
 End Function
-

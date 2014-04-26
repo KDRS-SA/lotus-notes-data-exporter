@@ -1,0 +1,19 @@
+File:
+B-dxlExport.txt
+
+Lotus Script Agent creating export from Notes database.
+Supported Lotus Notes versions: 6.5
+
+Lotus Script Version: B.1.0.0
+
+Description:
+Exports a Lotus Notes database completely using DXL-export format, including all notes-documents and attached files inside each notes document. You must have access to Lotus Notes Client with Designer Client in order to create a Lotus Script agent running this code. Lotus Notes ID in use must have sufficient access (Access Control List, preferably Manager). Generic code exporting the DXL-file. Parameters for export path etc.
+
+Git version-name: A.1.2.0
+Stable-release version: 0.5.1
+
+Features:
+-DXL export
+
+True/False-parameter selection for: 
+-DXL export

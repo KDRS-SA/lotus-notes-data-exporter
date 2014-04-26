@@ -1,18 +1,13 @@
-ChangeLog.txt
+_A_ChangeLog.txt
 
 Lotus Notes Data Exporter
 
-### Ver 0.5.1 2012-11-19 Torbjørn Aasen ### original git ver A.1.2.0 ###
+### git ver 0.5.1 2012-11-19 Torbjørn Aasen ### original git ver A.1.2.0 ###
 A_xmlExport ver A.1.2.0 2012-11-19 
 - Compatible with Lotus Notes 5.x & 6.5 (only 6.5 in previous version).
 - Parameters & text markout set 2 separate versions for notes 6.5 & 5.x
 - Not tested with Notes 4.x or earlier, nor later versions after 6.5
 - XML & TXT, first version without DXL-option.
-
-B_dxlExport ver B.1.0.0 2012-11-19	
-- DXL single export (no XML data-export).
-- Compatible with Lotus Notes/Domino ver 6.5 only.
-- dxlExport.txt  parameters set ready for usage.
 
 ### Ver 0.5.0 2012-11-05 Olav Alexander Mjelde ### original git ver A.1.1.0 ###
 A_xmlExport ver A.1.1.0 2012-11-05 
