@@ -24,3 +24,42 @@ True/False-parameter selections for:
 -one txt-file for each individual notes document
 
 Script for Lotus Notes 6.5 and 5.x are identical, except any use of "Charset=" statement that is mandatorily marked out as text in the 5.x-version. The 5.x-version should run successfully in Lotus Notes 6.5 as well.
+
+
+### Parameter section ###
+
+### Mandatory parameter actions ###
+The export target dircetory must be created and available (this parameter can be edited as desired).
+ exportTarget = |C:\Export\LotusNotes\|   
+ 
+### Optional parameter actions (can run as is or be changed) ###
+ 
+'# Create 1 single output file for the whole database
+ exportXML = True      ' Set to true if you want 1 XML per database  - rec.: True
+ exportTXT = True     ' Set to true if you want 1 TXT per database  - rec.: True
+
+'# Create multiple output files (one for each notes document in the database)
+ exportTXT11 = False    ' Set to true if you want 1 TXT per document   - rec.: False
+ exportXML11 = False     ' Set to true if you want 1 XML per document  - rec.: False 
+ 
+'# Export empty tags? 
+ exportEmptyTags = True   ' Huge dumps may need this set to false   - rec.: True
+ exportAttachments = True  ' Your files/attachments, if any in the db.   - rec.: True
+
+'# Subfolders to be created by the script
+ xmlFolder = |xml|        ' For XML files 
+ txtFolder = |txt|         ' For TXT files
+ attachmentFolder = |filer|     ' For attachments / files
+ logFolder = |logg|        ' For logs (error and result)
+ 
+'# Logging, file names
+ strErrorLogName = |avvik|     ' The error log file name "error" (will only log when errors>0)
+ strResultsLogName = |resultater|   ' The results log file name "results" (will log documents, attachments and number of errors)
+ strExportLogName = |instillinger|   ' The export settings log file name, will log boolean values,etc.
+
+'# Logging, field names 
+ strRecordsTxt = |Dokument|    ' The text for documents in the log file, also used in the XML "Documents"  
+ strAttachmentTxt = |Filer|      ' The text for Attachments/files in the log file "Files"
+ strErrorTxt = |Feil|        ' The text for Error in the log file "Errors"
+ strOnLineTxt = |på linje|      ' For error logging "on line"
+ strInTxt = |i|          ' For error logging "in" (error in)

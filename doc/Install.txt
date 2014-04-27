@@ -48,8 +48,8 @@ Creating and running the Lotus Notes Agent with the Lotus Script code:
 18. Edit Lotus Script parameters for file folder, filename etc.
     - NB! Start level directory MUST exist before agent is started
 	- EX: "C:\Export\LotusNotes\"
-	- The script typically uses Lotus Notes Filename as next subfolder.
-	- If this subfolder exist already then move/rename/delete folder first.
+	- The script typically uses Lotus Notes Database Filename as next subfolder.
+	- If this subfolder exist already then move/rename/delete the folder first.
 19. Optional: Replace Agent Name using copied text from the agent.
     - Click middle section, Objects "(Declarations)"
 	- Select and copy first line from 2nd char to end of line (no ' included)

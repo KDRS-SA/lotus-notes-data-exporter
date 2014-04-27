@@ -17,3 +17,41 @@ Features:
 
 True/False-parameter selection for: 
 -DXL export
+
+
+### Parameter section ###
+
+### Mandatory parameter actions ###
+The export target dircetory must be created and available (this parameter can be edited as desired).
+ exportTarget = |C:\Export\LotusNotesDX1\|   
+ 
+### Optional parameter actions (can run as is or be changed) ###
+Not recommended to edit parameters below because most of the parameters below are not in use in the DXL-export (inherited from earlier versions where XML, TXT & DXL export was included in the same code).
+ 
+'# Output options
+ exportDXL = True    ' Dump db to DXL (FULL XML DUMP)    - rec.: True  
+ exportTXT11 = False    ' Set to true if you want 1 TXT per document   - rec.: False
+ exportXML11 = False     ' Set to true if you want 1 XML per document  - rec.: False 
+ 
+'# Export empty tags? 
+ exportEmptyTags = True   ' Huge dumps may need this set to false   - rec.: True
+ exportAttachments = True  ' Your files/attachments, if any in the db.   - rec.: True
+
+'# Subfolders to be created by the script
+ xmlFolder = |xml|        ' For XML files 
+ txtFolder = |txt|         ' For TXT files
+ dxlFolder = |dxl|         ' For DXL dump of db
+ attachmentFolder = |filer|     ' For attachments / files
+ logFolder = |logg|        ' For logs (error and result)
+ 
+'# Logging, file names
+ strErrorLogName = |avvik|     ' The error log file name "error" (will only log when errors>0)
+ strResultsLogName = |resultater|   ' The results log file name "results" (will log documents, attachments and number of errors)
+ strExportLogName = |instillinger|   ' The export settings log file name, will log boolean values,etc.
+
+'# Logging, field names 
+ strRecordsTxt = |Dokument|    ' The text for documents in the log file, also used in the XML "Documents"  
+ strAttachmentTxt = |Filer|      ' The text for Attachments/files in the log file "Files"
+ strErrorTxt = |Feil|        ' The text for Error in the log file "Errors"
+ strOnLineTxt = |på linje|      ' For error logging "on line"
+ strInTxt = |i|          ' For error logging "in" (error in)

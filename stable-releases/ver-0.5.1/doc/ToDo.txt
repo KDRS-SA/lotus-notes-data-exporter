@@ -2,7 +2,7 @@ ToDo.txt
 
 Lotus Notes Data Exporter
 
-xmlExport A.1.2.0 2012-11-19
+A_xmlExport_6.5/5.x A.1.2.0 2012-11-19
 
 ToDo list:
 1. Expand file/folder handling: Now exits without logging/warning if sub-folders below project exists (agent have been run before). Maybe add date-time stamp top database subfolder created at time of export

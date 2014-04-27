@@ -24,7 +24,7 @@ Option Explicit
 '###################### VERSION ###############################
 '#  							          Version number and date
 '#############################################################
-Const cstVersion = |A.1.2.0|
+Const cstVersion = |B.1.0.0|
 Const cstVersionDate = |2012-11-19|
 Const cstVersionInfo = |DXL single export (no XML data-export). Supporting Lotus Notes/Domino 6.5.|
 

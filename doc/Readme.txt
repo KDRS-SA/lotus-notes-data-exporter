@@ -2,6 +2,19 @@ Readme.txt
 
 Lotus Notes Data Exporter
 
+Consists of a number of Lotus Notes Script Agents solving different tasks of data analysis and export from various Lotus Notes versions. More troughout documentation of the inividual scripts and how to install, edit parameters and rund the script in a Lotus Notes Agent can be found in the doc-section of Lotus Notes Data Exporter.
+
+Available Lotus Notes Script Agents:
+A_xmlExport_6.5/5.x.txt - XML/TXT export.
+B_dxlExport.txt - DXL export.
+
+Scripts to be released later on:
+C_analyseDatabase.txt - DB analyse of notes docs, fields, forms etc (types & counters).
+D_xmlExportForm.txt - XML export structyred by type of forms etc (external config file).
+
+
+Parameter settings in the Lotus Notes script agent may need to be edited:
+
 Regarding what to edit, you will see it quite well commented.
 You will have to set the export target and that target must be prepared (create folders)
 
@@ -11,42 +24,6 @@ This you can set to what suits you, like f:\myexport\project1\ or what ever.
 Just know that the path must work before you run the script.
 
 You dont really have to set anything else, but you can.
-
-These settings can be changed
-	exportXML = True 					' Set to true if you want 1 XML per database		- rec.: True
-	exportTXT = True					' Set to true if you want 1 TXT per database		- rec.: True
-	exportDXL	 = False					' Dump db to DXL (FULL XML DUMP) 			- rec.: True
-	
-'# These apply for 1% of the users (much more work in the following migration steps)  	
-	exportTXT11 = False				' Set to true if you want 1 TXT per document 		- rec.: False
-	exportXML11	= False 				' Set to true if you want 1 XML per document 	- rec.: False	
-	
-'# Export empty tags? 
-	exportEmptyTags = True			' Huge dumps may need this set to false			- rec.: True
-	exportAttachments = True		' Your files/attachments, if any in the db.			- rec.: True
-
-	
-And you can set the subfolders too! (they will be created by the script, if they are needed (depends on your settings))
-
-	xmlFolder = |xml|								' For XML files 
-	txtFolder = |txt|									' For TXT files
-	dxlFolder = |dxl|									' For DXL dump of db
-	attachmentFolder = |filer|					' For attachments / files
-	logFolder = |logg|								' For logs (error and result)
-	
-Also you might want to change theese settings:
-
-	strErrorLogName = |avvik|					' The error log file name "error" (will only log when errors>0)
-	strResultsLogName = |resultater|			' The results log file name "results" (will log documents, attachments and number of errors)
-	strExportLogName = |instillinger|			' The export settings log file name, will log boolean values,etc.
-'# Logging, field names	
-	strRecordsTxt = |Dokument|				' The text for documents in the log file, also used in the XML "Documents"  
-	strAttachmentTxt = |Filer|						' The text for Attachments/files in the log file "Files"
-	strErrorTxt = |Feil|								' The text for Error in the log file "Errors"
-	strOnLineTxt = |på linje|						' For error logging "on line"
-	strInTxt = |i|										' For error logging "in" (error in)
-	
-That's all for now.
 
 When the settings are changed, find the agent in the agent list.
 (Left click on the agents in the designer).
