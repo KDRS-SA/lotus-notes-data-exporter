@@ -1,17 +1,15 @@
 Files:
-A_xmlExport_6.5.txt
-A_xmlExport_5.x.txt
+A_xmlExport.txt
 
 Lotus Script Agent creating export from Notes database.
 Supported Lotus Notes versions: 6.5, 5.x
 
-Lotus Script Version: A.1.2.0
+Lotus Script Version: A.1.3.0
 
 Description:
 Exports alle notes documents from a Lotus Notes database including attached files inside each notes document. You must have access to Lotus Notes Client with Designer Client in order to create a Lotus Script agent running this code. Lotus Notes ID in use must have sufficient access (Access Control List, preferably Manager). Generic code exporting all field names and field values from each notes document. Parameters for export path etc. 
 
-Git version-name: A.1.2.0
-Stable-release version: 0.5.1
+Git version-name: 0.6.0
 
 Features:
 -XML export
@@ -23,7 +21,10 @@ True/False-parameter selections for:
 -one xml-file for each individual notes document
 -one txt-file for each individual notes document
 
-Script for Lotus Notes 6.5 and 5.x are identical, except any use of "Charset=" statement that is mandatorily marked out as text in the 5.x-version. The 5.x-version should run successfully in Lotus Notes 6.5 as well.
+Compatible with Lotus Notes 5.x & 6.5, now combined in a single Lotus Script agent.
+- Not tested with Notes 4.x or earlier, nor later versions after 6.5
+- Tested successfully norwegian characters export with XML declaration Encoding = "ISO-8859-1"
+- Settings.xml tags added parameters for xml (expXml), txt (expTxt), attachments (attachments), log (log).
 
 
 ### Parameter section ###
@@ -46,20 +47,40 @@ The export target dircetory must be created and available (this parameter can be
  exportEmptyTags = True   ' Huge dumps may need this set to false   - rec.: True
  exportAttachments = True  ' Your files/attachments, if any in the db.   - rec.: True
 
+'# Charset used in exportfile not currently supported!
+const	skipEncoding = False			' =True; Do NOT include Charset Encoding in XML declaration	
+Const	cstCharset = "ISO-8859-1"		' Choices = "UTF-8" | = "ISO-8859-1" | ...
+ 
 '# Subfolders to be created by the script
  xmlFolder = |xml|        ' For XML files 
  txtFolder = |txt|         ' For TXT files
  attachmentFolder = |filer|     ' For attachments / files
  logFolder = |logg|        ' For logs (error and result)
  
-'# Logging, file names
- strErrorLogName = |avvik|     ' The error log file name "error" (will only log when errors>0)
- strResultsLogName = |resultater|   ' The results log file name "results" (will log documents, attachments and number of errors)
- strExportLogName = |instillinger|   ' The export settings log file name, will log boolean values,etc.
-
+'# Logging, filenames
+ strResultsLogName = |results|   ' The results log file name "results" (will log documents, attachments and number of errors)
+ strExportLogName = |settings|   ' The export settings log file name, will log boolean values,etc.
+ strErrorLogName = |errors|     ' The error log file name "error" (will only log when errors>0)
+ 
 '# Logging, field names 
- strRecordsTxt = |Dokument|    ' The text for documents in the log file, also used in the XML "Documents"  
- strAttachmentTxt = |Filer|      ' The text for Attachments/files in the log file "Files"
- strErrorTxt = |Feil|        ' The text for Error in the log file "Errors"
- strOnLineTxt = |på linje|      ' For error logging "on line"
- strInTxt = |i|          ' For error logging "in" (error in)
+'# Export.xml #
+Const	strRecordsetTxt = |rs|				' The text for recordset-documents in the log file, also used in the XML "record" ( DO NOT CALL THIS DOCUMENT or Document!) 
+Const	strRecordsTxt = |r|					' The text for records-documents in the log file, also used in the XML "record" ( DO NOT CALL THIS DOCUMENT or Document!)  
+Const	strAttachmentTxt = |files|		' The text for Attachments/files in the log file "Files"
+
+'# Settings.xml #
+Const	strTagExportXml = |expXml|
+Const	strTagExportTxt = |expTxt|
+Const	strTagExportAttach = |attachments|
+Const	strTagExportLog = |log|
+
+'# Results.xml #
+Const	strSavedTxt = |FilesSaved|		' The text for "Files Saved" 
+
+'# Errors.xml #
+Const	strErrorTxt = |error|					' The text for Error in the log file "Errors"
+Const	strOnLineTxt = |on line|			' For error logging "on line"
+Const	strInTxt = |in|							' For error logging "in" (error in)
+
+'# Element counter ID
+Const	InitCurrID = 100000 	' Record (Notes Document) counter to keep unique names

@@ -1,4 +1,4 @@
-'xmlExport_A.1.2.0_Notes-5.x: 
+'xmlExport_A.1.3.0: 
 
 Option Explicit
 
@@ -17,18 +17,18 @@ Option Explicit
 '   See the License for the specific language governing permissions and
 '   limitations under the License.
 
-'  COMPATIBLE/TESTED WITH LOTUS NOTES/DOMINO VER 6.5
-'  THIS FILE HAS PARAMETERS SET FOR LOTUS NOTES/DOMINO VER 5.x COMPABILITY
-'  (SOME LINES MARKED OUT AS TEXT TO ALLOW LOTUS SCRIPT TO RUN IN THIS VERSION OF NOTES/DOMINO)
+'  COMPATIBLE/TESTED WITH LOTUS NOTES/DOMINO VER 6.5 & 5.x
+'  THIS VERSION OF THE SCRIPT HAVE REPLACED ANY USE OF CHARSET= STATMENT
+'  TO MAKE IDENTICAL CODE SETUP OF 6.5 AND 5.x VERSIONS
 
 '# Constants    
 
 '###################### VERSION ###############################
 '#  							          Version number and date
 '#############################################################
-Const cstVersion = |A.1.2.0|
-Const cstVersionDate = |2012-11-19|
-Const cstVersionInfo = |Supporting Lotus Notes/Domino 5.x &amp; 6.x.|
+Const cstVersion = |A.1.3.0|
+Const cstVersionDate = |2014-04-28|
+Const cstVersionInfo = |Supporting Lotus Notes/Domino 6.5 and 5.x|
 
 '###################### AUTHORS SECTION ######################
 '#            Additional co-authors to be added below with incremented id number
@@ -53,11 +53,11 @@ Const	exportTarget = |C:\Export\LotusNotes\|           'For instance "C:\Export\
 '#################### SHOULD SET THIS #########################
 '#                                             Which formats to export        
 '############################################################
-'# These apply to 99% of the users
+'# These apply to 70% of the users
 Const	exportXML = True                            ' Set to true if you want 1 XML per database		- rec.: True
 Const	exportTXT = True                             ' Set to true if you want 1 TXT per database		- rec.: True
 
-'# These apply for 1% of the users (much more work in the following migration steps)    
+'# These apply for 30% of the users (much more work in the following migration steps)    
 Const	exportTXT11 = True                       ' Set to true if you want 1 TXT per document		- rec.: False
 Const	exportXML11 = True                      ' Set to true if you want 1 XML per document		- rec.: False   
 
@@ -65,8 +65,9 @@ Const	exportXML11 = True                      ' Set to true if you want 1 XML pe
 Const	exportEmptyTags = True			' Huge dumps may need this set to false			- rec.: True
 Const	exportAttachments = True		' Your files/attachments, if any in the db.			- rec.: True
 
-Const	bCharset = False					' = True; Use selected char-set  on "open file". Supported by Lotus Notes/Domino ver 6.5 only. = False for earlier versions.
-Const	cstCharset = "UTF-8"				' Choices = "UTF-8" | = "ISO-8859-1" | ...
+'# Charset used in exportfile not currently supported!
+const	skipEncoding = False			' =True; Do NOT include Charset Encoding in XML declaration	
+Const	cstCharset = "ISO-8859-1"		' Choices = "UTF-8" | = "ISO-8859-1" | ...
 
 '###################### CAN SET THIS ##########################
 '#                                               Name of subfoders                            
@@ -81,23 +82,33 @@ Const	logFolder = |log|                                   ' For logs (error and 
 ' #                      Here you can modify the script for language, filenames, etc.          
 ' #                      Please do not use any slashes                                                           
 ' ###########################################################
-'# Logging, file names, no extensions!
-Const	strErrorLogName = |Errors|				' The error log file name "error" (will only log when errors>0)
-Const	strResultsLogName = |Results|		' The results log file name "results" (will log documents, attachments and number of errors)
-Const	strExportLogName = |Settings|		' The export settings log file name, will log boolean values,etc.
+
+'# Log filenames
+Const	strResultsLogName = |results|		' The results log file name "results" (will log documents, attachments and number of errors)
+Const	strExportLogName = |settings|		' The export settings log file name, will log boolean values,etc.
+Const	strErrorLogName = |errors|				' The error log file name "error" (will only log when errors>0)
 
 '# Logging, field names (do not use spaces)
-Const	strRecordsTxt = |r|					' The text for rootdocuments in the log file, also used in the XML "record" ( DO NOT CALL THIS DOCUMENT or Document!)  
-Const	strRecordsetTxt = |rs|				' The text for rootdocuments in the log file, also used in the XML "record" ( DO NOT CALL THIS DOCUMENT or Document!)  
-Const	strAttachmentTxt = |Files|		' The text for Attachments/files in the log file "Files"
-Const	strSavedTxt = |FilesSaved|		' The text for "Files Saved" 
-Const	strErrorTxt = |Error|					' The text for Error in the log file "Errors"
+'# Export.xml #
+Const	strRecordsetTxt = |rs|				' The text for recordset-documents in the log file, also used in the XML "record" ( DO NOT CALL THIS DOCUMENT or Document!) 
+Const	strRecordsTxt = |r|					' The text for records-documents in the log file, also used in the XML "record" ( DO NOT CALL THIS DOCUMENT or Document!)  
+Const	strAttachmentTxt = |files|		' The text for Attachments/files in the log file "Files"
+
+'# Settings.xml #
+Const	strTagExportXml = |expXml|
+Const	strTagExportTxt = |expTxt|
+Const	strTagExportAttach = |attachments|
+Const	strTagExportLog = |log|
+
+'# Results.xml #
+Const	strSavedTxt = |filesSaved|		' The text for "Files Saved" 
+
+'# Errors.xml #
+Const	strErrorTxt = |error|					' The text for Error in the log file "Errors"
 Const	strOnLineTxt = |on line|			' For error logging "on line"
 Const	strInTxt = |in|							' For error logging "in" (error in)
 
-'###################### CAN SET THIS ####################################
-'#                                             Additional settings                            
-'######################################################################
+'# Element counter ID
 Const	InitCurrID = 100000 	' Record (Notes Document) counter to keep unique names
 
 '################## END OF CONSTANTS SECTION  ##########################
@@ -110,7 +121,7 @@ Dim db As NotesDatabase
 Dim doc As NotesDocument
 Dim dc As NotesDocumentCollection
 Dim numFiles, numDocs, numErr, n, k, numFilesSaved As Integer
-Dim thisCharSet As String
+Dim thisCharSet As String    'Charset not currently supported!
 
 Dim CurrID As Long     
 Dim attachment As NotesEmbeddedObject
@@ -120,12 +131,13 @@ Dim strErrors, attachmentName, filename As String
 Dim projectPath As String
 Dim bLoop As Integer
 
+Dim vThisFieldValue As Variant
+
 ' Leftover after converting variables to constant (agent user-changable parameters moved to top)
 'Dim exportTarget, xmlFolder, dxlFolder, attachmentFolder, logFolder, projectPath, txtFolder, strSavedTxt As String
 'Dim strErrorLogName, strResultsLogName, strExportLogName, strRecordsTxt, strAttachmentTxt, strErrorTxt, strRecordsetTxt As String
 'Dim exportXML11, exportXML, exportTXT11, exportTXT, exportDXL, exportAttachments, exportEmptyTags As Boolean
 'Dim strInTxt, strOnLineTxt As String
-
 
 Sub Initialize
 	Set session = New NotesSession
@@ -144,7 +156,7 @@ Sub Initialize
 	numFiles = 0
 	numErr = 0
 	numDocs = 0
-	thisCharset = cstCharset
+	thisCharset = cstCharset    ' Charset not currently supported!
 	CurrID = InitCurrID
 	
 	' Set the tab, the newline and forcefeed
@@ -166,58 +178,39 @@ Sub Initialize
 	Set dc = db.AllDocuments
 	Set doc = dc.GetFirstDocument   
 	
-	If exportXML Then  ' if set to export large xml (combined)
-		If bCharset	Then
-			' SWITCH - use for Lotus Notes/Domino ver 6.5
-			' MARK LINE BELOW AS COMMENT - when Lotus Script is running on Lotus Notes/Domin ver 5.x
-'#			Open projectPath + |\| + xmlFolder + |\| + Left(db.FileName, Len(db.FileName) - 4) + |.xml| For Output As 3 Charset=thisCharset
-		Else			
-			' SWITCH - use for Lotus Notes/Domino ver 5.x
-			Open projectPath + |\| + xmlFolder + |\| + Left(db.FileName, Len(db.FileName) - 4) + |.xml| For Output As 3			
-		End If
-		
-		Print #3, |<?xml version="1.0"  encoding="| + thisCharset + |"?>| 
+	If exportXML Then  ' if set to export large xml (combined)		
+		' SWITCH - use for Lotus Notes/Domino ver 6.5 & 5.x
+		Open projectPath + |\| + xmlFolder + |\| + Left(db.FileName, Len(db.FileName) - 4) + |.xml| For Output As 3				
+		if skipEncoding Then
+			Print #3, |<?xml version="1.0"?>| 
+		else
+			Print #3, |<?xml version="1.0"  encoding="| + thisCharset + |"?>| 
+		end if
 		Print #3, |<| + strRecordsetTxt + |>|             
 	End If
 	
 	If exportTXT Then  ' if set to export large txt (combined)
-		If bCharset	Then
-			' SWITCH - use for Lotus Notes/Domino ver 6.5
-			' MARK LINE BELOW AS COMMENT - when Lotus Script is running on Lotus Notes/Domin ver 5.x
-'#			Open projectPath + |\| + txtFolder + |\| + Left(db.FileName, Len(db.FileName) - 4) + |.txt| For Output As 4 Charset=thisCharset
-		Else
-			' SWITCH - use for Lotus Notes/Domino ver 5.x
-			Open projectPath + |\| + txtFolder + |\| + Left(db.FileName, Len(db.FileName) - 4) + |.txt| For Output As 4
-		End If
+		' SWITCH - use for Lotus Notes/Domino ver 6.5 & 5.x
+		Open projectPath + |\| + txtFolder + |\| + Left(db.FileName, Len(db.FileName) - 4) + |.txt| For Output As 4
 	End If
 	
 	While Not doc Is Nothing
 		numDocs = numDocs + 1
 		
 		If exportXML11 Then ' if set to export 1:1 xml (loose)     
-			If bCharset	Then
-				' SWITCH - use for Lotus Notes/Domino ver 6.5
-				' MARK LINE BELOW AS COMMENT - when Lotus Script is running on Lotus Notes/Domin ver 5.x
-'#				Open projectPath + |\| + xmlFolder + |\1\| + Cstr(CurrID) + |.xml| For Output As 1 Charset=thisCharset
-			Else
-				' SWITCH - use for Lotus Notes/Domino ver 5.x			
-				Open projectPath + |\| + xmlFolder + |\1\| + Cstr(CurrID) + |.xml| For Output As 1
-			End If
-			
-			Print #1, |<?xml version="1.0"  encoding="| + thisCharset + |"?>|
+			' SWITCH - use for Lotus Notes/Domino ver 6.5 & 5.x			
+			Open projectPath + |\| + xmlFolder + |\1\| + Cstr(CurrID) + |.xml| For Output As 1
+			if skipEncoding Then
+				Print #1, |<?xml version="1.0"?>|
+			else
+				Print #1, |<?xml version="1.0"  encoding="| + thisCharset + |"?>| 
+			end if
 			Print #1, |<| + strRecordsTxt + | id="| +  Cstr(CurrID) + |">|
 		End If          
 		
 		If exportTXT11 Then  ' if set to export 1:1 txt (loose) 
-			If bCharset	Then
-				' SWITCH - use for Lotus Notes/Domino ver 6.5
-				' MARK LINE BELOW AS COMMENT - when Lotus Script is running on Lotus Notes/Domin ver 5.x
-'#				Open projectPath + |\| + txtFolder + |\1\| + Cstr(CurrID) + |.txt| For Output As 2 Charset=thisCharset
-			Else
-				' SWITCH - use for Lotus Notes/Domino ver 5.x						
-				Open projectPath + |\| + txtFolder + |\1\| + Cstr(CurrID) + |.txt| For Output As 2
-			End If
-			
+			' SWITCH - use for Lotus Notes/Domino ver 6.5 & 5.x						
+			Open projectPath + |\| + txtFolder + |\1\| + Cstr(CurrID) + |.txt| For Output As 2			
 			Print #2, strRecordsTxt + |:| + strTab + Cstr(CurrID)
 		End If
 		
@@ -268,8 +261,8 @@ Sub Initialize
 		For k = 0 To Ubound( allFieldNames )	
 			' *** Change ***  Rewritten without using Replace function [to be Lotus Notes 5.x compatible]
 			' Earlier usage:  Replace(allFieldNames(k), "$", "")  			
-			thisFieldName = allFieldNames(k)
-			modFieldName = thisFieldName				
+			thisFieldName = Ucase$(allFieldNames(k))
+			modFieldName = thisFieldName
 			bLoop = True
 			While bLoop
 				If Not Left$(modFieldName, 1) = "$" Then
@@ -279,18 +272,19 @@ Sub Initialize
 				End If		
 			Wend
 			
-			If Not Isempty(doc.GetItemValue(allFieldNames(k))) Then ' if the field has data
+			vThisFieldValue = doc.GetItemValue(allFieldNames(k))(0)
+			If Not Isempty(vThisFieldValue) Then ' if the field has data
 				If exportXML11 Then  ' if set to export 1:1 xml (loose)                         
-					Print #1, strTab &  |<| & modFieldName  & |>| & doc.GetItemValue(allFieldNames(k))(0)&|</| & modFieldName  & |>|
+					Print #1, strTab &  |<| & modFieldName  & |>| & vThisFieldValue & |</| & modFieldName  & |>|
 				End If
 				If exportXML Then  ' if set to export xml (combined)                            
-					Print #3, strTab & strTab &  |<| &  modFieldName  & |>| & doc.GetItemValue(allFieldNames(k))(0)&|</| & modFieldName  & |>|
+					Print #3, strTab & strTab &  |<| &  modFieldName  & |>| & vThisFieldValue &|</| & modFieldName  & |>|
 				End If
 				If exportTXT11 Then  ' if set to export 1:1 txt (loose)                         
-					Print #2,  modFieldName  & |:| & strTab & doc.GetItemValue(allFieldNames(k))(0)
+					Print #2,  modFieldName  & |:| & strTab & vThisFieldValue
 				End If
 				If exportTXT Then  ' if set to export txt (combined)                            
-					Print #4,  modFieldName  & |:| & strTab & doc.GetItemValue(allFieldNames(k))(0)
+					Print #4,  modFieldName  & |:| & strTab & vThisFieldValue
 				End If
 			Else  ' if field has no data                            
 				If (exportEmptyTags) Then  ' if set to export empty tags (fields with no data)   
@@ -330,7 +324,7 @@ Sub Initialize
 	Wend
 	
 	If exportXML Then   ' if set to export xml (combined)           
-		Print #3, |</| + strRecordsetTxt + |>|    
+		Print #3, |</| + strRecordsetTxt + |>|
 		Close #3
 	End If
 	
@@ -361,17 +355,15 @@ End Sub
 Public Function printSettingsLog()
 	'# Settings logfile     
 	' The thought behind this is that one can send this file if a problem arises or someone else wishes to use the same parameters
+
+	' SWITCH - use for Lotus Notes/Domino ver 6.5 & 5.x
+	Open  projectPath + |\| + logFolder + |\| + strExportLogName + |.xml| For Output As 1
 	
-	If bCharset	Then
-		' SWITCH - use for Lotus Notes/Domino ver 6.5
-		' MARK LINE BELOW AS COMMENT - when Lotus Script is running on Lotus Notes/Domin ver 5.x
-'#		Open  projectPath + |\| + logFolder + |\| + strExportLogName + |.xml| For Output As 1 Charset=thisCharset
-	Else
-		' SWITCH - use for Lotus Notes/Domino ver 5.x
-		Open  projectPath + |\| + logFolder + |\| + strExportLogName + |.xml| For Output As 1
-	End If
-	
-	Print #1, |<?xml version="1.0" encoding="| + thisCharset + |" standalone="yes"?>|
+	if skipEncoding Then
+		Print #1, |<?xml version="1.0" standalone="yes"?>|
+	else
+		Print #1, |<?xml version="1.0" encoding="| + thisCharset + |" standalone="yes"?>|
+	end if
 	Print #1, |<settings>|
 	
 	' <runningCode>
@@ -388,14 +380,14 @@ Public Function printSettingsLog()
 	
 	' <export>
 	Print #1, strTab + |<export workfolder="| + exportTarget + |">|
-	Print #1, strTab + strTab + |<xml file="combined" target="| + xmlFolder  + |\">|  + Cstr(exportXML) + |</xml>|
-	Print #1, strTab + strTab + |<xml file="loose" target="| + xmlFolder  + |\1\">|  + Cstr(exportXML11) + |</xml>|
-	Print #1, strTab + strTab + |<txt file="combined" target="| + txtFolder  + |\">|  + Cstr(exportTXT) + |</txt>|
-	Print #1, strTab + strTab + |<txt file="loose" target="| + txtFolder  + |\1\">|  + Cstr(exportTXT11) + |</txt>|
-	Print #1, strTab + strTab + |<attachments file="loose"  target="| + attachmentFolder  + |\">| + Cstr(exportAttachments) + |</attachments>|        
-	Print #1, strTab + strTab + |<log file="combined" type="error" name="| + strErrorLogName + |.xml" target="| + logFolder  + |\">True</log>|
-	Print #1, strTab + strTab + |<log file="combined" type="results" name="| + strResultsLogName + |.xml" target="| + logFolder  + |\">True</log>|
-	Print #1, strTab + strTab + |<log file="combined" type="exportsettings" name="| + strExportLogName + |.xml" target="| + logFolder  + |\">True</log>|
+	Print #1, strTab + strTab + |<| +strTagExportXml+ | file="combined" target="| + xmlFolder  + |\">|  + Cstr(exportXML) + |</| +strTagExportXml+ |>|
+	Print #1, strTab + strTab + |<| +strTagExportXml+ | file="loose" target="| + xmlFolder  + |\1\">|  + Cstr(exportXML11) + |</| +strTagExportXml+ |>|
+	Print #1, strTab + strTab + |<| +strTagExportTxt+ | file="combined" target="| + txtFolder  + |\">|  + Cstr(exportTXT) + |</| +strTagExportTxt+ |>|
+	Print #1, strTab + strTab + |<| +strTagExportTxt+ | file="loose" target="| + txtFolder  + |\1\">|  + Cstr(exportTXT11) + |</| +strTagExportTxt+ |>|
+	Print #1, strTab + strTab + |<| +strTagExportAttach+ | file="loose"  target="| + attachmentFolder  + |\">| + Cstr(exportAttachments) + |</| +strTagExportAttach+ |>|        
+	Print #1, strTab + strTab + |<| +strTagExportLog+ | file="combined" type="error" name="| + strErrorLogName + |.xml" target="| + logFolder  + |\">True</| +strTagExportLog+ |>|
+	Print #1, strTab + strTab + |<| +strTagExportLog+ | file="combined" type="results" name="| + strResultsLogName + |.xml" target="| + logFolder  + |\">True</| +strTagExportLog+ |>|
+	Print #1, strTab + strTab + |<| +strTagExportLog+ | file="combined" type="exportsettings" name="| + strExportLogName + |.xml" target="| + logFolder  + |\">True</| +strTagExportLog+ |>|
 	Print #1, strTab + |</export>|
 	
 	' <globalization>
@@ -420,16 +412,14 @@ End Function
 Public Function printResultsLog()
 	'# Results file, this logs the count of documents, attachments and errors. It also displays version name of the script
 	
-	If bCharset	Then
-		' SWITCH - use for Lotus Notes/Domino ver 6.5
-		' MARK LINE BELOW AS COMMENT - when Lotus Script is running on Lotus Notes/Domin ver 5.x
-'#		Open  projectPath + |\| + logFolder + |\| + strResultsLogName + |.xml| For Output As 1 Charset=thisCharset
-	Else
-		' SWITCH - use for Lotus Notes/Domino ver 5.x
-		Open  projectPath + |\| + logFolder + |\| + strResultsLogName + |.xml| For Output As 1
-	End If		
+	' SWITCH - use for Lotus Notes/Domino ver 6.5 & 5.x
+	Open  projectPath + |\| + logFolder + |\| + strResultsLogName + |.xml| For Output As 1
 	
-	Print #1, |<?xml version="1.0" encoding="| + thisCharset + |" standalone="yes"?>|
+	if skipEncoding Then
+		Print #1, |<?xml version="1.0" standalone="yes"?>|
+	else
+		Print #1, |<?xml version="1.0" encoding="| + thisCharset + |" standalone="yes"?>|
+	end if
 	Print #1, |<| + strResultsLogName + |>|	
 	
 	Print #1, strTab + |<| + strRecordsTxt + |>| + Cstr(numDocs) + |</| + strRecordsTxt + |>|
@@ -442,16 +432,14 @@ Public Function printResultsLog()
 	Close #1
 End Function
 Public Function printErrorLog()
-	If bCharset	Then
-		' SWITCH - use for Lotus Notes/Domino ver 6.5
-		' MARK LINE BELOW AS COMMENT - when Lotus Script is running on Lotus Notes/Domin ver 5.x
-'#		Open  projectPath + |\| + logFolder + |\| + strErrorLogName + |.xml| For Output As 1 Charset = thisCharSet
-	Else
-		' SWITCH - use for Lotus Notes/Domino ver 5.x
-		Open  projectPath + |\| + logFolder + |\| + strErrorLogName + |.xml| For Output As 1	
-	End If			
+	' SWITCH - use for Lotus Notes/Domino ver 6.5 & 5.x
+	Open  projectPath + |\| + logFolder + |\| + strErrorLogName + |.xml| For Output As 1	
 	
-	Print #1, |<?xml version="1.0" encoding="| + thisCharset + |" standalone="yes"?>|
+	if skipEncoding Then
+		Print #1, |<?xml version="1.0" standalone="yes"?>|
+	else
+		Print #1, |<?xml version="1.0" encoding="| + thisCharset + |" standalone="yes"?>|
+	end if
 	Print #1, "" + strErrors +""
 	
 	Close #1

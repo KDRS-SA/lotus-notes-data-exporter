@@ -24,7 +24,7 @@ Creating and running the Lotus Notes Agent with the Lotus Script code:
 2. Open up the tree structure "[+]Shared code" and click on line "Agents".
 3. Click top button "New agent".
 4. In the Name-section of the dialog, enter a name (ex: Name = "export").
-5. In the Runtime-section of the dialog, select "Agent list selection" from the first dropdown list.
+5. In the Runtime-section of the dialog, select "Action menu selection" from the first dropdown list.
 6. Click the key-icon tab (security) on top of the Agent property window.
 7. Click the blue button the the right of "Run on behalf of" and select a user with Manager access to the database.
    ("Run on behalf of" selection may possibly be skipped, depends on the Lotus Notes access for this Notes ID)
@@ -61,8 +61,8 @@ Creating and running the Lotus Notes Agent with the Lotus Script code:
 20. Close Agent Window 
 	- Shortcupt "Ctrl-W" or top menu "File \ Close"
 	- Click "Yes" if prompted to save the Agent properly.
-21. Run the Lotus Script Agent
-    - Right-click agent line and select "Run"
-	   ... or ...
-	- Select top menu "Agent \ Run"
+21. Run the Lotus Script Agent from the Lotus Notes Client
+    - Open database in Lotus Notes Client
+	- Run Agent from top menu: "Actions \ <Agent Name> from this list"
+	- You may have to select "More" if this database hav e large set of Agents in this list.
 22. Check generated File Structure, export files and log files.

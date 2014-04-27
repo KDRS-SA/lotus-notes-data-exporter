@@ -1,0 +1,16 @@
+bugfix_A.1.1.1.txt
+
+Lotus Notes Data Exporter
+
+New version: 
+A_xmlExport_A.1.1.1.txt 2014-04-27
+
+Old version:
+A_xmlExport_A.1.1.0.txt 2012-11-05
+
+Minor bugfix:
+Removed all </xml> closing tags for all generated XML documents.
+The XML declaration is not a part of the XML document itself, and it has no closing tag.
+
+Cleanup;
+Removed some unnecessary 'Tab' indents.

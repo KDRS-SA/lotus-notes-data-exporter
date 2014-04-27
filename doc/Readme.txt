@@ -5,7 +5,7 @@ Lotus Notes Data Exporter
 Consists of a number of Lotus Notes Script Agents solving different tasks of data analysis and export from various Lotus Notes versions. More troughout documentation of the inividual scripts and how to install, edit parameters and rund the script in a Lotus Notes Agent can be found in the doc-section of Lotus Notes Data Exporter.
 
 Available Lotus Notes Script Agents:
-A_xmlExport_6.5/5.x.txt - XML/TXT export.
+A_xmlExport.txt - XML/TXT export.
 B_dxlExport.txt - DXL export.
 
 Scripts to be released later on:
