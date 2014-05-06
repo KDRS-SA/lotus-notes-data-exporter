@@ -1,0 +1,86 @@
+Files:
+A_xmlExport.txt
+
+Lotus Script Agent creating export from Notes database.
+Supported Lotus Notes versions: 6.5, 5.x
+
+Lotus Script Version: A.1.3.0
+
+Description:
+Exports alle notes documents from a Lotus Notes database including attached files inside each notes document. You must have access to Lotus Notes Client with Designer Client in order to create a Lotus Script agent running this code. Lotus Notes ID in use must have sufficient access (Access Control List, preferably Manager). Generic code exporting all field names and field values from each notes document. Parameters for export path etc. 
+
+Git version-name: 0.6.0
+
+Features:
+-XML export
+-TXT export
+
+True/False-parameter selections for: 
+-single complete xml-file from all notes documents
+-single complete txt-file from all notes documents
+-one xml-file for each individual notes document
+-one txt-file for each individual notes document
+
+Compatible with Lotus Notes 5.x & 6.5, now combined in a single Lotus Script agent.
+- Not tested with Notes 4.x or earlier, nor later versions after 6.5
+- Tested successfully norwegian characters export with XML declaration Encoding = "ISO-8859-1"
+- Settings.xml tags added parameters for xml (expXml), txt (expTxt), attachments (attachments), log (log).
+
+
+### Parameter section ###
+
+### Mandatory parameter actions ###
+The export target dircetory must be created and available (this parameter can be edited as desired).
+ exportTarget = |C:\Export\LotusNotes\|   
+ 
+### Optional parameter actions (can run as is or be changed) ###
+ 
+'# Create 1 single output file for the whole database
+ exportXML = True      ' Set to true if you want 1 XML per database  - rec.: True
+ exportTXT = True     ' Set to true if you want 1 TXT per database  - rec.: True
+
+'# Create multiple output files (one for each notes document in the database)
+ exportTXT11 = False    ' Set to true if you want 1 TXT per document   - rec.: False
+ exportXML11 = False     ' Set to true if you want 1 XML per document  - rec.: False 
+ 
+'# Export empty tags? 
+ exportEmptyTags = True   ' Huge dumps may need this set to false   - rec.: True
+ exportAttachments = True  ' Your files/attachments, if any in the db.   - rec.: True
+
+'# Charset used in exportfile not currently supported!
+const	skipEncoding = False			' =True; Do NOT include Charset Encoding in XML declaration	
+Const	cstCharset = "ISO-8859-1"		' Choices = "UTF-8" | = "ISO-8859-1" | ...
+ 
+'# Subfolders to be created by the script
+ xmlFolder = |xml|        ' For XML files 
+ txtFolder = |txt|         ' For TXT files
+ attachmentFolder = |filer|     ' For attachments / files
+ logFolder = |logg|        ' For logs (error and result)
+ 
+'# Logging, filenames
+ strResultsLogName = |results|   ' The results log file name "results" (will log documents, attachments and number of errors)
+ strExportLogName = |settings|   ' The export settings log file name, will log boolean values,etc.
+ strErrorLogName = |errors|     ' The error log file name "error" (will only log when errors>0)
+ 
+'# Logging, field names 
+'# Export.xml #
+Const	strRecordsetTxt = |rs|				' The text for recordset-documents in the log file, also used in the XML "record" ( DO NOT CALL THIS DOCUMENT or Document!) 
+Const	strRecordsTxt = |r|					' The text for records-documents in the log file, also used in the XML "record" ( DO NOT CALL THIS DOCUMENT or Document!)  
+Const	strAttachmentTxt = |files|		' The text for Attachments/files in the log file "Files"
+
+'# Settings.xml #
+Const	strTagExportXml = |expXml|
+Const	strTagExportTxt = |expTxt|
+Const	strTagExportAttach = |attachments|
+Const	strTagExportLog = |log|
+
+'# Results.xml #
+Const	strSavedTxt = |FilesSaved|		' The text for "Files Saved" 
+
+'# Errors.xml #
+Const	strErrorTxt = |error|					' The text for Error in the log file "Errors"
+Const	strOnLineTxt = |on line|			' For error logging "on line"
+Const	strInTxt = |in|							' For error logging "in" (error in)
+
+'# Element counter ID
+Const	InitCurrID = 100000 	' Record (Notes Document) counter to keep unique names

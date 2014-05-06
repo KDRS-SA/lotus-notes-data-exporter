@@ -2,6 +2,12 @@ _B_ChangeLog.txt
 
 Lotus Notes Data Exporter
 
+### git ver 0.7.0 2014-05-06 Torbjørn Aasen ###
+B_dxlExport ver B.1.0.1 2014-05-05	
+- Parameter set for extra trailing "postfix" for database subfolder name.
+  (then all Utility Scripts (A, B, C etc.) may run without without interference in folder subnames.)
+- Parameter to enable as the end part of this trailing "postfix" subfolder name.
+
 ### git ver 0.5.1 2012-11-19 Torbjørn Aasen ### original git ver A.1.2.0 ###
 B_dxlExport ver B.1.0.0 2012-11-19	
 - DXL single export (no XML data-export).

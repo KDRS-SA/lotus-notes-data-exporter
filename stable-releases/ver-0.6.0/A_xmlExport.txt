@@ -1,6 +1,7 @@
-'xmlExport_A.1.3.1: 
+'xmlExport_A.1.3.0: 
 
 Option Explicit
+
 '   Copyright [2012] [Olav Alexander Mjelde / Bergen Byarkiv]
 '   [Torbjørn Aasen / Interkommunalt Arkiv for Møre og Romsdal IKS]
 
@@ -25,10 +26,8 @@ Option Explicit
 '###################### VERSION ###############################
 '#  							          Version number and date
 '#############################################################
-Const cstVersionPrefix = "A"
-Const cstVersionName ="xmlExport"
-Const cstVersion = |A.1.3.1|
-Const cstVersionDate = |2014-05-05|
+Const cstVersion = |A.1.3.0|
+Const cstVersionDate = |2014-04-28|
 Const cstVersionInfo = |Supporting Lotus Notes/Domino 6.5 and 5.x|
 
 '###################### AUTHORS SECTION ######################
@@ -50,8 +49,6 @@ Const cstAuthors = |			<Author id="1">
 '#############################################################
 Const	exportTarget = |C:\Export\LotusNotes\|           'For instance "C:\Export\LotusNotes\" (remember trailing).
 																			'This folder MUST be present, otherwise the agent exits.
-Const cstLotusScriptPostfix = "_A"              				    ' Making different postfix foldername ending different Lotus Script utilities
-Const cstLotusScriptPostfixVersion = True                   ' Using "_" + Version as output folder name.
 
 '#################### SHOULD SET THIS #########################
 '#                                             Which formats to export        
@@ -69,7 +66,7 @@ Const	exportEmptyTags = True			' Huge dumps may need this set to false			- rec.:
 Const	exportAttachments = True		' Your files/attachments, if any in the db.			- rec.: True
 
 '# Charset used in exportfile not currently supported!
-Const	skipEncoding = False			' =True; Do NOT include Charset Encoding in XML declaration	
+const	skipEncoding = False			' =True; Do NOT include Charset Encoding in XML declaration	
 Const	cstCharset = "ISO-8859-1"		' Choices = "UTF-8" | = "ISO-8859-1" | ...
 
 '###################### CAN SET THIS ##########################
@@ -114,60 +111,8 @@ Const	strInTxt = |in|							' For error logging "in" (error in)
 '# Element counter ID
 Const	InitCurrID = 100000 	' Record (Notes Document) counter to keep unique names
 
-'## 8 Dialog Settings ##
-
-'# Displayed Button
-Const cstMB_OK = 0
-Const cstMB_OKCANCEL = 1
-Const cstMB_ABORTRETRYIGNORE = 2
-Const cstMB_YESNOCANCEL = 3
-Const cstMB_YESNO = 4
-Const cstMB_RETRYCANCEL = 5
-
-' Button Icon
-Const cstMB_ICONSTOP = 16
-Const cstMB_ICONQUESTION = 32
-Const cstMB_ICONEXCLAMATION = 48
-Const cstMB_ICONINFORMATION = 64
-
-' Default Button
-Const cstMB_DEFBUTTON1 = 0
-Const cstMB_DEFBUTTON2 = 256
-Const cstMB_DEFBUTTON3 = 512
-
-' Message Box Modality
-Const cstMB_APPLMODAL = 0
-Const cstMB_SYSTEMMODAL = 4096
-
-'# Return Value
-Const cstIDOK = 1
-Const cstIDCANCEL = 2
-Const cstIDABORT = 3
-Const cstIDRETRY = 4
-Const cstIDIGNORE = 5
-Const cstIDYES = 6
-Const cstIDNo = 7
-
-' ## 9 Debug Settings ##
-Const cstErrorHandler = True				' = True then handle Errors; =False, stop script on first running code error (for debugging)
-Const cstDebugLoop = True				' = True then print Notes Document counter in bottom status line
-Const cstDebugLoopPrintCount = 100		' = Print status count interval
-Const cstDebugLoopTxtPrefix = "No "		' Prefix text
-Const cstDebugLoopTxtMid = " of "			' Middle text
-Const cstDebugLoopTxtPostfix = " Notes Documents."	' Postfix text
-
 '################## END OF CONSTANTS SECTION  ##########################
 '# Declare variables
-
-'## 9 Debug Settings ##
-Dim bErrorHandler As Boolean
-Dim bDebugLoop As Boolean
-Dim nDebugLoopPrintCount As Integer
-Dim strDebugLoopTxtPrefix As String
-Dim strDebugLoopTxtMid As String
-Dim strDebugLoopTxtPostfix As String
-Dim strDebugLoopTxtPostfix2 As String
-
 Dim strTab, strNewLine, strForceFeed As String 
 Dim uidoc As NotesUIDocument
 
@@ -175,7 +120,6 @@ Dim session As NotesSession
 Dim db As NotesDatabase
 Dim doc As NotesDocument
 Dim dc As NotesDocumentCollection
-Dim nDcCount As Long
 Dim numFiles, numDocs, numErr, n, k, numFilesSaved As Integer
 Dim thisCharSet As String    'Charset not currently supported!
 
@@ -194,7 +138,6 @@ Dim vThisFieldValue As Variant
 'Dim strErrorLogName, strResultsLogName, strExportLogName, strRecordsTxt, strAttachmentTxt, strErrorTxt, strRecordsetTxt As String
 'Dim exportXML11, exportXML, exportTXT11, exportTXT, exportDXL, exportAttachments, exportEmptyTags As Boolean
 'Dim strInTxt, strOnLineTxt As String
-
 
 Sub Initialize
 	Set session = New NotesSession
@@ -221,68 +164,28 @@ Sub Initialize
 	strNewLine = Chr$(10)
 	strForceFeed = Chr$(12)
 	
-	' Use Error Handler?
-	bErrorHandler = cstErrorHandler
-	If bErrorHandler Then
-		On Error Goto ErrorHandler 
-	End If
-	
-	'# Get documents for loop
-	Set dc = db.AllDocuments
-	nDcCount = dc.Count
-	' ToDo: Read and display more information about the selected database
-	
-	' Message Box: Run script?
-	' ToDo: Move Dim-section below to Declaration
-	Dim nBoxType As Long, nAnswer As Integer
-	nBoxType = cstMB_YESNO + cstMB_ICONQUESTION
-	Dim strMessageTitle, strMessageText As String
-	strMessageTitle = cstVersionPrefix +"_"+ cstVersionName +" ver "+ cstVersion 
-	strMessageText ="Do you want to start exporting data from " + Format$(nDcCount) + " Notes Documents in this Database, possibly with attached files?"
-	nAnswer = Messagebox(strMessageText, nBoxType, strMessageTitle)
-	If nAnswer = cstIDYES Then
-		' Yes, Continue
-		
-	Else
-		'  No, Exit agent script
-		
-		Exit Sub
-	End If
+	On Error Goto ErrorHandler 
 	
 	Dim thisAgent As NotesAgent     
 	Set thisAgent = session.CurrentAgent            
 	projectPath = exportTarget & Left(db.FileName, Len(db.FileName) - 4) ' remove extension and . (dot)
-	If cstLotusScriptPostfixVersion Then
-		projectPath = projectPath +"_"+ cstVersion
-	Else
-		projectPath = projectPath + cstLotusScriptPostfix
-	End If
 	result = makeFolders()
 	
-	'#  Let's start by printing the settings log. If the script fails, this is a good place to start the debug :-)  
+'#  Let's start by printing the settings log. If the script fails, this is a good place to start the debug :-)  
 	result = printSettingsLog()
 	
-	'## 9 Debug Settings ##
-	bErrorHandler = cstErrorHandler
-	bDebugLoop = cstDebugLoop
-	nDebugLoopPrintCount = cstDebugLoopPrintCount
-	strDebugLoopTxtPrefix = cstDebugLoopTxtPrefix
-	strDebugLoopTxtMid = cstDebugLoopTxtMid
-	strDebugLoopTxtPostfix = cstDebugLoopTxtPostfix
-	
-	
-	'# Continue documents for loop
-	strDebugLoopTxtPostfix2 = strDebugLoopTxtMid + Format$(nDcCount) + strDebugLoopTxtPostfix
+'# Get documents for loop
+	Set dc = db.AllDocuments
 	Set doc = dc.GetFirstDocument   
 	
 	If exportXML Then  ' if set to export large xml (combined)		
 		' SWITCH - use for Lotus Notes/Domino ver 6.5 & 5.x
 		Open projectPath + |\| + xmlFolder + |\| + Left(db.FileName, Len(db.FileName) - 4) + |.xml| For Output As 3				
-		If skipEncoding Then
+		if skipEncoding Then
 			Print #3, |<?xml version="1.0"?>| 
-		Else
+		else
 			Print #3, |<?xml version="1.0"  encoding="| + thisCharset + |"?>| 
-		End If
+		end if
 		Print #3, |<| + strRecordsetTxt + |>|             
 	End If
 	
@@ -297,11 +200,11 @@ Sub Initialize
 		If exportXML11 Then ' if set to export 1:1 xml (loose)     
 			' SWITCH - use for Lotus Notes/Domino ver 6.5 & 5.x			
 			Open projectPath + |\| + xmlFolder + |\1\| + Cstr(CurrID) + |.xml| For Output As 1
-			If skipEncoding Then
+			if skipEncoding Then
 				Print #1, |<?xml version="1.0"?>|
-			Else
+			else
 				Print #1, |<?xml version="1.0"  encoding="| + thisCharset + |"?>| 
-			End If
+			end if
 			Print #1, |<| + strRecordsTxt + | id="| +  Cstr(CurrID) + |">|
 		End If          
 		
@@ -369,8 +272,8 @@ Sub Initialize
 				End If		
 			Wend
 			
+			vThisFieldValue = doc.GetItemValue(allFieldNames(k))(0)
 			If Not Isempty(vThisFieldValue) Then ' if the field has data
-				vThisFieldValue = doc.GetItemValue(allFieldNames(k))(0)
 				If exportXML11 Then  ' if set to export 1:1 xml (loose)                         
 					Print #1, strTab &  |<| & modFieldName  & |>| & vThisFieldValue & |</| & modFieldName  & |>|
 				End If
@@ -416,14 +319,6 @@ Sub Initialize
 			Print #3, strTab & |</| & strRecordsTxt  & |>|        
 		End If
 		
-		'# Debug Loop section #
-		If bDebugLoop Then
-			If numDocs Mod nDebugLoopPrintCount = 0 Then
-				Print strDebugLoopTxtPrefix + Format$(numDocs) + strDebugLoopTxtPostfix2
-			End If
-		End If 
-		'# END Debug Loop section #
-		
 		Set doc = dc.GetNextDocument( doc )
 		CurrID = CurrID + 1
 	Wend
@@ -446,12 +341,6 @@ Sub Initialize
 	End If
 	
 Done: 
-	' Messagebox Done!
-	nBoxType = cstMB_OK+ cstMB_ICONINFORMATION
-	strMessageTitle = cstVersionPrefix +"_"+ cstVersionName +" ver "+ cstVersion
-	strMessageText ="Done exporting data from " + Format$(nDcCount) + " Notes Documents in this Database, possibly with attached files."
-	nAnswer = Messagebox(strMessageText, nBoxType, strMessageTitle)
-	
 	Exit Sub ' Skip  ErrorHanlder - if successfull
 ErrorHandler: 
 	Select Case Err                 
@@ -466,15 +355,15 @@ End Sub
 Public Function printSettingsLog()
 	'# Settings logfile     
 	' The thought behind this is that one can send this file if a problem arises or someone else wishes to use the same parameters
-	
+
 	' SWITCH - use for Lotus Notes/Domino ver 6.5 & 5.x
 	Open  projectPath + |\| + logFolder + |\| + strExportLogName + |.xml| For Output As 1
 	
-	If skipEncoding Then
+	if skipEncoding Then
 		Print #1, |<?xml version="1.0" standalone="yes"?>|
-	Else
+	else
 		Print #1, |<?xml version="1.0" encoding="| + thisCharset + |" standalone="yes"?>|
-	End If
+	end if
 	Print #1, |<settings>|
 	
 	' <runningCode>
@@ -526,11 +415,11 @@ Public Function printResultsLog()
 	' SWITCH - use for Lotus Notes/Domino ver 6.5 & 5.x
 	Open  projectPath + |\| + logFolder + |\| + strResultsLogName + |.xml| For Output As 1
 	
-	If skipEncoding Then
+	if skipEncoding Then
 		Print #1, |<?xml version="1.0" standalone="yes"?>|
-	Else
+	else
 		Print #1, |<?xml version="1.0" encoding="| + thisCharset + |" standalone="yes"?>|
-	End If
+	end if
 	Print #1, |<| + strResultsLogName + |>|	
 	
 	Print #1, strTab + |<| + strRecordsTxt + |>| + Cstr(numDocs) + |</| + strRecordsTxt + |>|
@@ -546,11 +435,11 @@ Public Function printErrorLog()
 	' SWITCH - use for Lotus Notes/Domino ver 6.5 & 5.x
 	Open  projectPath + |\| + logFolder + |\| + strErrorLogName + |.xml| For Output As 1	
 	
-	If skipEncoding Then
+	if skipEncoding Then
 		Print #1, |<?xml version="1.0" standalone="yes"?>|
-	Else
+	else
 		Print #1, |<?xml version="1.0" encoding="| + thisCharset + |" standalone="yes"?>|
-	End If
+	end if
 	Print #1, "" + strErrors +""
 	
 	Close #1
@@ -578,4 +467,3 @@ Public Function makeFolders()
 		End If
 	End If
 End Function
-

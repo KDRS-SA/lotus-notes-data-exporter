@@ -1,6 +1,7 @@
-'dxlExport_B.1.0.1: 
+'dxlExport_B.1.0.0: 
 
 Option Explicit
+
 '   Copyright [2012] [Olav Alexander Mjelde / Bergen Byarkiv]
 '   [Torbjørn Aasen / Interkommunalt Arkiv for Møre og Romsdal IKS]
 
@@ -23,8 +24,8 @@ Option Explicit
 '###################### VERSION ###############################
 '#  							          Version number and date
 '#############################################################
-Const cstVersion = |B.1.0.1|
-Const cstVersionDate = |2014-05-05|
+Const cstVersion = |B.1.0.0|
+Const cstVersionDate = |2012-11-19|
 Const cstVersionInfo = |DXL single export (no XML data-export). Supporting Lotus Notes/Domino 6.5.|
 
 '###################### AUTHORS SECTION ######################
@@ -44,10 +45,8 @@ Const cstAuthors = |			<Author id="1">
 '##################### MUST SET THIS ##########################
 '#                                                                              Root export folder                           
 '#############################################################
-Const	exportTarget = |C:\Export\LotusNotes\|           'For instance "C:\Export\LotusNotes\" (remember trailing).
+Const	exportTarget = |C:\Export\LotusNotesDxl\|           'For instance "C:\Export\LotusNotesDxl\" (remember trailing).
                                                                                           	     'This folder MUST be present, otherwise the agent exits.
-Const cstLotusScriptPostfix = "_B"              				    ' Making different postfix foldername ending different Lotus Script utilities
-Const cstLotusScriptPostfixVersion = True                   ' Using "_" + Version as output folder name.
 
 '#################### SHOULD SET THIS #########################
 '#                                                                        Which formats to export                       
@@ -78,50 +77,8 @@ Const	strErrorTxt = |Error|					' The text for Error in the log file "Errors"
 Const	strOnLineTxt = |on line|			' For error logging "on line"
 Const	strInTxt = |in|							' For error logging "in" (error in)
 
-'## 8 Dialog Settings ##
-
-'# Displayed Button
-Const cstMB_OK = 0
-Const cstMB_OKCANCEL = 1
-Const cstMB_ABORTRETRYIGNORE = 2
-Const cstMB_YESNOCANCEL = 3
-Const cstMB_YESNO = 4
-Const cstMB_RETRYCANCEL = 5
-
-' Button Icon
-Const cstMB_ICONSTOP = 16
-Const cstMB_ICONQUESTION = 32
-Const cstMB_ICONEXCLAMATION = 48
-Const cstMB_ICONINFORMATION = 64
-
-' Default Button
-Const cstMB_DEFBUTTON1 = 0
-Const cstMB_DEFBUTTON2 = 256
-Const cstMB_DEFBUTTON3 = 512
-
-' Message Box Modality
-Const cstMB_APPLMODAL = 0
-Const cstMB_SYSTEMMODAL = 4096
-
-'# Return Value
-Const cstIDOK = 1
-Const cstIDCANCEL = 2
-Const cstIDABORT = 3
-Const cstIDRETRY = 4
-Const cstIDIGNORE = 5
-Const cstIDYES = 6
-Const cstIDNo = 7
-
-' ## 9 Debug Settings ##
-Const cstErrorHandler = True				' = True then handle Errors; =False, stop script on first running code error (for debugging)
-
 '################## END OF CONSTANTS SECTION  ##########################
 '# Declare variables
-
-'## 9 Debug Settings ##
-Dim bErrorHandler As Boolean
-'##
-
 Dim strTab, strNewLine, strForceFeed As String 
 Dim uidoc As NotesUIDocument
 
@@ -144,9 +101,6 @@ Dim projectPath As String
 'Dim strErrorLogName, strResultsLogName, strExportLogName, strRecordsTxt, strAttachmentTxt, strErrorTxt, strRecordsetTxt As String
 'Dim exportXML11, exportXML, exportTXT11, exportTXT, exportDXL, exportAttachments, exportEmptyTags As Boolean
 'Dim strInTxt, strOnLineTxt As String
-
-
-
 
 Sub Initialize
 	Set session = New NotesSession
@@ -177,21 +131,11 @@ Sub Initialize
 '# Open xml file named after current database
 	Set stream = session.CreateStream
 	
-	' Use Error Handler?
-	bErrorHandler = cstErrorHandler
-	If bErrorHandler Then
-		On Error Goto ErrorHandler 
-	End If
+	On Error Goto ErrorHandler 
 	
 	Dim thisAgent As NotesAgent     
 	Set thisAgent = session.CurrentAgent            
 	projectPath = exportTarget & Left(db.FileName, Len(db.FileName) - 4) ' remove extension and . (dot)
-	projectPath = exportTarget & Left(db.FileName, Len(db.FileName) - 4) ' remove extension and . (dot)
-	If cstLotusScriptPostfixVersion Then
-		projectPath = projectPath +"_"+ cstVersion
-	Else
-		projectPath = projectPath + cstLotusScriptPostfix
-	End If
 	result = makeFolders()
 	
 '#  Let's start by printing the settings log. If the script fails, this is a good place to start the debug :-)  

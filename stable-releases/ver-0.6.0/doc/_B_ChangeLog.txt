@@ -1,0 +1,9 @@
+_B_ChangeLog.txt
+
+Lotus Notes Data Exporter
+
+### git ver 0.5.1 2012-11-19 Torbjørn Aasen ### original git ver A.1.2.0 ###
+B_dxlExport ver B.1.0.0 2012-11-19	
+- DXL single export (no XML data-export).
+- Compatible with Lotus Notes/Domino ver 6.5 only.
+- dxlExport.txt  parameters set ready for usage.

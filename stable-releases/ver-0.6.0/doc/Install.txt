@@ -1,0 +1,68 @@
+Install.txt
+
+Lotus Notes Data Exporter
+
+Select the appropriate Lotus Script according to wanted export output type.
+
+Read the "_info.txt" file for the selected Lotus Script and check for version compability and parameter settings.
+
+The Lotus Script code exports a single Lotus Notes database completely using XML, TXT, DXL or other export formats, including all or parameter-selected notes-documents and attached files inside each notes document. 
+
+You must have access to Lotus Notes Client with Designer Client in order to create a Lotus Script agent running this code. Lotus Notes ID in use must have sufficient access (Access Control List, preferably Manager). 
+
+
+Creating and running the Lotus Notes Agent with the Lotus Script code:
+(Example below using Lotus Notes 6.5)
+ 
+1. Open Lotus Notes Designer and open the Lotus Notes Database to be exported.
+    - Open Lotus Notes Client
+	- Find Database on desktop
+	- Right-click the Database Icon on desktop and select "Open in Designer"
+         ... or ...
+	- Open Lotus Notes Designer
+	- Open Database using shortcut Ctrl-O or top menu "File \ Database \ Open"
+2. Open up the tree structure "[+]Shared code" and click on line "Agents".
+3. Click top button "New agent".
+4. In the Name-section of the dialog, enter a name (ex: Name = "export").
+5. In the Runtime-section of the dialog, select "Action menu selection" from the first dropdown list.
+6. Click the key-icon tab (security) on top of the Agent property window.
+7. Click the blue button the the right of "Run on behalf of" and select a user with Manager access to the database.
+   ("Run on behalf of" selection may possibly be skipped, depends on the Lotus Notes access for this Notes ID)
+8. Set runtime security level to "3. Allow restricted operations with full administration rights".
+9. Save the agent using shortcut "Ctrl-S" or top menu "File \ Save".
+10. Close the Agent-property dialogbox (click X in dialog upper right corner).
+11. Select "LotusScript" from the dropdown list in top of the Agent window.
+12. Open the "Import" dialog window:
+    - Right-click in main section in middle-right and select "Import"
+	   ... or ...
+	- Select top menu "File \ Import"
+13. Select folder with the Lotus Script to import.
+    - Navigate in the file-catalog structure using "Search" dropdown list.
+    - Ex: "C:\export-script\"
+14. Type "*.txt" in the "Filename" field and click button "Import".
+15. Select a Lotus Script code-file from the dialog list
+    - According to wanted export type and structure
+    - Ex: "A_xmlExport_6.5.txt"
+16. Import the Lotus Script by clicking button "Import".
+17. Click button "Yes" to replace existing script in agent (is empty anyway).
+18. Edit Lotus Script parameters for file folder, filename etc.
+    - NB! Start level directory MUST exist before agent is started
+	- EX: "C:\Export\LotusNotes\"
+	- The script typically uses Lotus Notes Database Filename as next subfolder.
+	- If this subfolder exist already then move/rename/delete the folder first.
+19. Optional: Replace Agent Name using copied text from the agent.
+    - Click middle section, Objects "(Declarations)"
+	- Select and copy first line from 2nd char to end of line (no ' included)
+	- Open Agent Property dialog window once more
+	   Shortcup Alt-O and select Agent from dropdown list
+	   or Right-click in middel and select "Agent properties"
+	- Replace/Paste copied text into "Agent Name" field.
+	- Save Agent using shortcup "Ctrl-S" or top menu "File \ Save"
+20. Close Agent Window 
+	- Shortcupt "Ctrl-W" or top menu "File \ Close"
+	- Click "Yes" if prompted to save the Agent properly.
+21. Run the Lotus Script Agent from the Lotus Notes Client
+    - Open database in Lotus Notes Client
+	- Run Agent from top menu: "Actions \ <Agent Name> from this list"
+	- You may have to select "More" if this database hav e large set of Agents in this list.
+22. Check generated File Structure, export files and log files.

@@ -1,0 +1,11 @@
+News.txt
+
+Lotus Notes Data Exporter
+
+### git ver 0.6.0 2014-04-28 Torbjørn Aasen ###
+A_xmlExport ver A.1.3.0 2014-04-28 
+- Compatible with Lotus Notes 5.x & 6.5, now combined in a single Lotus Script agent.
+- Not tested with Notes 4.x or earlier, nor later versions after 6.5
+- Exports XML & TXT
+- Tested successfully norwegian characters export with XML declaration Encoding = "ISO-8859-1"
+- Settings.xml tags added parameters for xml (expXml), txt (expTxt), attachments (attachments), log (log).

@@ -1,0 +1,874 @@
+'xmlExportForm_C.0.3.0: 
+
+Option Explicit
+
+'   Copyright [2014] [[Torbjørn Aasen / Interkommunalt Arkiv for Møre og Romsdal IKS]
+'   Copyright [2012] [Olav Alexander Mjelde / Bergen Byarkiv]
+
+'   Licensed under the Apache License, Version 2.0 (the "License");
+'   you may not use this file except in compliance with the License.
+'   You may obtain a copy of the License at
+
+'       http://www.apache.org/licenses/LICENSE-2.0
+
+'   Unless required by applicable law or agreed to in writing, software
+'   distributed under the License is distributed on an "AS IS" BASIS,
+'   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+'   See the License for the specific language governing permissions and
+'   limitations under the License.
+
+'### Constants ###
+
+'## 1 Authors section ##
+Const cstVersionPrefix = "C"
+Const cstVersionName ="xmlExportForm"
+Const cstVersionNo = "C.0.3.0"
+Const cstVersionDate = "2014-05-05"
+Const cstVersionInfo = "Notes Database analyze and export by form or specialized formatting. Early Alpha-version just parsing through forms and fields and counting elements."
+Const cstVersionChanges = "Analyzing forms"
+
+Const cstVersionAuthor = "Torbjørn Aasen"
+Const cstVersionAuthorOrg = "Interkommunalt arkiv for Møre og Romsdal IKS"
+Const cstVersionAuthorEmail = "taa.database@gmail.com"
+
+Const cstParentVersion = "A.1.1.0"
+Const cstParentVersionDate = "2012-11-05"
+Const cstParentVersionAuthor = "Olav Alexander Mjelde"
+Const cstParentVersionAuthorOrg = "Bergen byarkiv"
+Const cstParentVersionAuthorEmail = "olav.mjelde@bergen.kommune.no"
+
+' Multiple coAuthor values optional seperated by #
+Const cstVersionCoAuthor = ""
+Const cstVersionCoAuthorOrg = ""
+Const cstParentCoAuthorEmail = ""
+
+'# Old constants to be converted to new code #
+Const cstAuthors = |			<Author id="1">
+				<AuthorName>Torbjørn Aasen</AuthorName>
+				<AuthorOrg>Interkommunalt arkiv for Møre og Romsdal IKS</AuthorOrg>
+				<AuthorEmail>taa.database@gmail.com</AuthorEmail>
+			</Author>
+			<Author id="2">
+				<AuthorName>Olav Alexander Mjelde</AuthorName>
+				<AuthorOrg>Bergen byarkiv</AuthorOrg>
+				<AuthorEmail>olav.mjelde@bergen.kommune.no</AuthorEmail>
+			</Author>|
+
+'## 2 Settings section ##
+
+' if cstLotusScriptParameters ="script" then parameters in Louts Script below is used and any External Settings are ignored.
+Const cstLotusScriptParameters = "script"    ' Value = "script" or = "file"    [ "file" not implemented yet ]
+Const cstLotusScriptPostfix = "_C"                  ' Making different postfix folder name ending different Lotus Script utilities.
+Const cstLotusScriptPostfixVersion = True    ' Using "_" + Version as output folder name.
+
+'# 2a External Setting file (ignored if cstLotusScriptParameters = "script" )
+Const cstSettingsFile = "C_analyseDatabase_settings.xml"    ' Ex.: "C_analyseDatabase_settings.xml"
+Const cstSettingsUseDataDir = True    ' =True; use Lotus Notes Data directory to search for the Settings file.
+
+' If cstSettingsUseDataDir = False then this folder MUST exist and be available to the Lotus Script otherwise the agent exits
+Const cstSettingsFileDir = "C:\Export\LotusNotes\"    'Ex.: "C:\Export\LotusNotes\" (remember trailing).
+
+'# 2b Export Target directory (exportTarget)
+Const cstExportTargetUseNotesDataExportDir = True    'if =True use Lotus Notes Data directory + "\Export\" as Export Target folder
+
+' If cstExportTargetUseNotesDataExportDir = False then this folder MUST exist and be available to the Lotus Script otherwise the agent exits
+Const cstExportTargetDir = "C:\Export\LotusNotes\"    'Ex.: "C:\Export\LotusNotes\" (remember trailing).
+
+' ## 3 Export format section ##
+
+'# 3a Export to single file #
+Const cstExportXML = True    ' Set to true if you want 1 XML per database    - rec.: True
+Const cstExportTXT = True    ' Set to true if you want 1 TXT per database    - rec.: True
+
+'# 3b Export targeted by specialized selection (ex. by "form" name) #
+Const cstExportXML00 = True    ' Set to true if you want 1 XML per form detected    - rec.: True
+Const cstExportTXT00= True    ' Set to true if you want 1 TXT per form detected    - rec.: True
+
+'# 3c Export to 1individual file per Lotus Notes document #
+Const cstExportXML11 = False    ' Set to true if you want 1 XML per document    - rec.: False 
+Const cstExportTXT11 = False    ' Set to true if you want 1 TXT per document    - rec.: False
+
+'# 3d Export empty tags? #
+Const cstExportEmptyTags = True    ' Huge dumps may need this set to false    - rec.: True
+Const cstExportAttachments = True    ' Export files/attachments from Notes Documents, if any in the db.    - rec.: True
+
+'# 3e Character Encoding
+Const cstSkipEncoding = False			' =True; Do NOT include Charset Encoding in XML declaration	
+Const cstCharset = "ISO-8859-1"		' Choices = "UTF-8" | = "ISO-8859-1" | ...
+
+'# 3f Export CSV-format if TXT is enabled? #
+Const cstExportCsvTXT = True
+Const cstExportCsvSeparator = ";"
+
+'# 3g Export to Analyze file #
+Const cstExportAnalyze = True    ' Set to true if you want Database Analysis    - rec.: True
+
+'## 4 File, folders, tagnames, etc. (NO slashes) ##
+
+'# 4a Subfolder names (NO slashes) #
+Const cstXmlFolder = "xml"                  ' - xml  For XML files
+Const cstSpecFolder = "export"           ' - export  For specialized targeted output (ex.: form-name)
+Const cstTxtFolder = "txt"                       ' - txt  For TXT files
+Const cstAttachmentFolder = "files"     ' - files  For attachments / files
+Const cstLogFolder = "log"                    ' - log  For logs (error and result)
+Const cstAnalyzeFolder = "analyze"     ' - analyze  For Datbase Analyse
+
+'# 4b Filenames #
+Const cstResultsLogName = "results"    ' - results  The results log file name "results" (will log documents, attachments and number of errors)
+Const cstExportLogName = "settings"    ' - settings  The export settings log file name, will log boolean values,etc.
+Const cstErrorLogName = "error"            ' - error  The error log file name "error" (will only log when errors>0)
+Const cstAnalyzeName = "analyze"          ' - analyze  The analyze file name
+
+'# 4c Log field names 
+Const cstRecordsTxt = "r"               ' - r  The text for rootdocuments in the log file, also used in the XML "record" ( DO NOT CALL THIS DOCUMENT or Document!)  
+Const cstRecordsetTxt = "rs"          ' - rs  The text for rootdocuments in the log file, also used in the XML "record" ( DO NOT CALL THIS DOCUMENT or Document!)  
+Const cstAttachmentTxt = "files"    ' - files  The text for Attachments/files in the log file "Files"
+
+'# 4d Tag Names in Analyze.xml
+
+'# 4e Tag Names in Settings.xml #
+Const cstTagExportXml = "expXml"
+Const cstTagExportTxt = "expTxt"
+Const cstTagExportAttach = "attachments"
+Const cstTagExportLog = "log"
+
+'# 4f Tag Names in Results.xml #
+Const cstSavedTxt = "filesSaved"    ' The text for "Files Saved" 
+
+'# 4g Tag Names in Errors.xml #
+Const cstErrorTxt = "Errors"                  ' The text for Error in the log file "Errors"
+Const cstOnLineTxt = "on line"       ' For error logging "on line"
+Const cstInTxt = "in"                              ' For error logging "in" (error in)
+
+'## 5 Additional Settings ##
+
+' #5a Record Counter #
+Const cstInitCurrID = 100000    ' Record (Notes Document) counter to keep unique names
+
+'## 8 Dialog Settings ##
+
+'# Displayed Button
+Const cstMB_OK = 0
+Const cstMB_OKCANCEL = 1
+Const cstMB_ABORTRETRYIGNORE = 2
+Const cstMB_YESNOCANCEL = 3
+Const cstMB_YESNO = 4
+Const cstMB_RETRYCANCEL = 5
+
+' Button Icon
+Const cstMB_ICONSTOP = 16
+Const cstMB_ICONQUESTION = 32
+Const cstMB_ICONEXCLAMATION = 48
+Const cstMB_ICONINFORMATION = 64
+
+' Default Button
+Const cstMB_DEFBUTTON1 = 0
+Const cstMB_DEFBUTTON2 = 256
+Const cstMB_DEFBUTTON3 = 512
+
+' Message Box Modality
+Const cstMB_APPLMODAL = 0
+Const cstMB_SYSTEMMODAL = 4096
+
+'# Return Value
+Const cstIDOK = 1
+Const cstIDCANCEL = 2
+Const cstIDABORT = 3
+Const cstIDRETRY = 4
+Const cstIDIGNORE = 5
+Const cstIDYES = 6
+Const cstIDNo = 7
+
+' ## 9 Debug Settings ##
+Const cstErrorHandler = True                    ' = True then handle Errors; =False, stop script on first running code error (for debugging)
+Const cstDebugLoop = True                      ' = True then print Notes Document counter in bottom status line
+Const cstDebugLoopPrintCount = 100    ' = Print status count interval
+Const cstDebugLoopTxtPrefix = "No "     ' Prefix text
+Const cstDebugLoopTxtMid = " of "         ' Middle text
+Const cstDebugLoopTxtPostfix = " Notes Documents."    ' Postfix text
+
+'### END Constants ###
+
+
+'### Variables ###
+
+'## A - Constants To Variables ##
+
+'## 2 Settings section ##
+Dim strLotusScriptPostfix As String
+Dim strLotusScriptPostfixVersion As Boolean
+Dim strSettingsFile As String
+Dim bSettingsUseDataDir As Boolean
+Dim strSettingsFileDir As String
+Dim bExportTargetUseNotesDataExportDir As Boolean
+Dim strExportTargetDir As String
+
+'## 3 Export format section ##
+Dim bExportXML As Boolean
+Dim bExportTXT As Boolean
+Dim bExportXML00 As Boolean
+Dim bExportTXT00 As Boolean
+Dim bExportXML11 As Boolean
+Dim bExportTXT11 As Boolean
+Dim bExportEmptyTags As Boolean
+Dim bExportAttachments As Boolean
+Dim bSkipEncoding As Boolean
+Dim strCharset As String
+Dim bExportCsvTXT As Boolean
+Dim strExportCsvSeparator As String
+Dim bExportAnalyze As Boolean
+
+'## 4 File, folders, tagnames, etc. (NO slashes) ##
+Dim strXmlFolder As String
+Dim strSpecFolder As String
+Dim strTxtFolder As String
+Dim strAttachmentFolder As String
+Dim strLogFolder As String
+Dim strAnalyzeFolder As String
+
+Dim strResultsLogName As String
+Dim strExportLogName As String
+Dim strErrorLogName As String
+Dim strAnalyzeName As String
+
+Dim strRecordsTxt As String
+Dim strRecordsetTxt As String
+Dim strAttachmentTxt As String
+
+Dim strTagExportXml As String
+Dim strTagExportTxt As String
+Dim strTagExportAttach As String
+Dim strTagExportLog As String
+
+Dim strSavedTxt As String
+Dim strErrorTxt As String
+Dim strOnLineTxt As String
+Dim strInTxt As String
+
+'## 5 Additional Settings ##
+Dim nInitCurrID As Long
+
+'## 8 Dialog Settings ##
+
+'## 9 Debug Settings ##
+Dim bErrorHandler As Boolean
+Dim bDebugLoop As Boolean
+Dim nDebugLoopPrintCount As Integer
+Dim strDebugLoopTxtPrefix As String
+Dim strDebugLoopTxtMid As String
+Dim strDebugLoopTxtPostfix As String
+Dim strDebugLoopTxtPostfix2 As String
+
+'## END A - Constants To Variables ##
+
+'## B - Standard variables ##
+
+Dim strTab, strNewLine, strForceFeed As String 
+Dim uidoc As NotesUIDocument
+
+Dim session As NotesSession
+Dim db As NotesDatabase
+Dim doc As NotesDocument
+Dim dc As NotesDocumentCollection
+Dim nDcCount As Long
+Dim strDcCount As String
+Dim item As NotesItem
+Dim numFiles, numDocs, numErr, n, k, numFilesSaved As Integer
+Dim thisCharSet As String    'Charset not currently supported!
+Dim v As Variant
+
+Dim CurrID As Long     
+Dim thisAttachment As NotesEmbeddedObject
+Dim arrAttachmentNames, allFieldNames, result As Variant
+Dim thisFieldName, modFieldName As Variant
+Dim strErrors, attachmentName, filename As String      
+Dim strProjectPath, strProjectPathPostfix As String
+Dim bLoop As Integer
+
+'# Form and Field analyze
+Dim exportForm, fileNumberForm, fileNumberFormXML, fileNumberFormTXT As Integer
+Dim thisFormValid, numThisForm, numPrevForm, numThisFormField, numFormFieldMax As Integer
+Dim nErrorList List As Long
+Dim vThisFieldValue As Variant
+Dim strThisForm, strThisFieldName, strThisFieldValue, strThisFormFieldName As String
+Dim bThisForm, bThisFormField, bDocHasAttachmentFile As Boolean    ' = True Form Value exists | = False Form Value non existing
+
+Dim nFormMax, nFormFieldMax As Integer    ' Counts number of encountered "form" and fields in "form" (rules Array Sizes)
+Dim strFormArray() As String              ' Field item "Form" Value in Notes Document; Array (1 to n) where n = nFormMax
+Dim nFormList List As Long                    ' Counts the number of Notes Documents for each "Form" Value encountered, Ex: ("MyForm") = 23
+Dim strFormFieldArray() As String      ' All Field item Values in Notes Document; 
+                                                                   ' Array (1 to n, 1 to m, 1 to o) where n = nFormMax, m & o = nFormFieldMax
+                                                                   ' n counts numer of "form" values, m = "form" value, o = "form" mod-value (without preceding $'s)
+Dim nFormFieldMaxList List As Integer    ' Counts the Max number of fields for each "form" type, Ex: ("MyForm") = 34
+Dim nFormFieldList List As Integer             ' Counts the number of particular field in each "form" type, Ex: ("MyForm#SomeFieldName") = 13
+Dim nFormFieldModList List As Integer    ' Same as above, but with Field name saved without preceding $'s
+Dim nFormAttachedFileList List As Long    ' Counts number of Form types with Attached File(s)
+
+'## END B - Standard variables ##
+
+'### END Variables ###
+Sub Initialize
+	
+	' ### No configuration below this part, only logic programming of the Lotus Script agent ###	
+	
+	' ## 1 Initialization ##
+	
+	'# Get Notes Session #
+	Set session = New NotesSession
+	
+	'# Get Notes Database #
+	Set db = session.CurrentDatabase
+	
+	'# Set Settings Variables #
+	If cstLotusScriptParameters = "script" Then
+		setConstSettings
+	Else
+		'   "file" option not implemented yet, EXITING
+		Exit Sub
+	End If
+	
+	'#  Counters for logging, etc. #
+	numFilesSaved = 0       
+	numFiles = 0
+	numErr = 0
+	numDocs = 0
+	thisCharset = cstCharset    ' Charset not currently supported!
+	CurrID = cstInitCurrID
+	
+	'# Set the tab, the newline and forcefeed #
+	strTab = Chr$(9)
+	strNewLine = Chr$(10)
+	strForceFeed = Chr$(12)
+	
+	' Use Error Handler?
+	bErrorHandler = cstErrorHandler
+	If bErrorHandler Then
+		On Error Goto ErrorHandler 
+	End If
+	
+	'# Get documents for loop
+	Set dc = db.AllDocuments
+	nDcCount = dc.Count
+	' ToDo: Read and display more information about the selected database
+	
+	' Message Box: Run script?
+	' ToDo: Move Dim-section below to Declaration
+	Dim nBoxType As Long, nAnswer As Integer
+	nBoxType = cstMB_YESNO + cstMB_ICONQUESTION
+	Dim strMessageTitle, strMessageText As String
+	strMessageTitle = cstVersionPrefix +"_"+ cstVersionName +" ver "+ cstVersionNo
+	strMessageText ="Do you want to start exporting data from " + Format$(nDcCount) + " Notes Documents in this Database, possibly with attached files?"
+	nAnswer = Messagebox(strMessageText, nBoxType, strMessageTitle)
+	If nAnswer = cstIDYES Then
+		' Yes, Continue
+		
+	Else
+		'  No, Exit agent script
+		
+		Exit Sub
+	End If
+	
+	Dim thisAgent As NotesAgent     
+	Set thisAgent = session.CurrentAgent            
+	
+	' ## 2 Create Folders and Log Files ##
+	
+	'# Project Path
+	strProjectPath = strExportTargetDir & Left(db.FileName, Len(db.FileName) - 4) ' remove extension and . (dot)
+	strProjectPath = strProjectPath + strProjectPathPostfix
+	
+	'# Create Folders 	
+	result = makeFolders()
+	
+	'#  Write Setttings
+	result = printSettingsLog()
+	
+	' ## 3 Prepare loop, iterating trough selected set of Notes Documents ##
+	
+	nFormMax = 0             ' Counts number of Form Names (Form Field Value)
+	nFormFieldMax = 0    ' Counts Max number of Form Field Names (Form Field Value)
+	
+	'# Continue documents for loop
+	strDebugLoopTxtPostfix2 = strDebugLoopTxtMid + Format$(nDcCount) + strDebugLoopTxtPostfix
+	Set doc = dc.GetFirstDocument   
+	
+	'# Create output files for on the fly writing in the loop through Notes Documents
+	
+	
+	' ## 4 Loop, iterating through selected set of Notes Documents	
+	While Not doc Is Nothing
+		numDocs = numDocs + 1
+		
+		' Read form name
+		Set item = doc.GetFirstItem( "form" )
+		If item Is Nothing Then
+			' This Notes Document has no Form Item!
+			bThisForm = False
+			strThisForm = "FormFieldValueNonExisting"
+			If Iselement ( nErrorList("FormFieldNoValue") ) Then
+				nErrorList("FormFieldNoValue") = nErrorList("FormFieldNoValue") + 1
+			Else
+				nErrorList("FormFieldNoValue") = 1
+			End If
+		Else
+			' This Notes Document has a Form Item!
+			
+			If item.Values(0) = "" Then
+				' This Notes Document has empty Form Value!
+				bThisForm = False
+				strThisForm = "FormFieldValueIsEmpty"
+				If Iselement ( nErrorList("FormFieldEmptyValue") ) Then
+					nErrorList("FormFieldEmptyValue") = nErrorList("FormFieldEmptyValue") + 1
+				Else
+					nErrorList("FormFieldEmptyValue") = 1
+				End If
+			Else
+				' This Notes Document has a Form Value!
+				bThisForm = True
+				strThisForm = item.Values(0)
+				
+				' Counter nFormList
+				If Iselement ( nFormList(strThisForm) ) Then
+					nFormList(strThisForm) = nFormList(strThisForm) + 1
+				Else
+					' First occurence of this Form Name
+					nFormList(strThisForm) = 1
+					nFormMax = nFormMax + 1
+					Redim Preserve strFormArray (1 To nFormMax)
+					strFormArray(nFormMax) = strThisForm    ' Set the ecountered Form Name in the next Array spot
+				End If
+			End If	
+		End If    '  Else Item Form is Nothing
+		
+		' Find attachments
+		bDocHasAttachmentFile = False
+		arrAttachmentNames = Evaluate("@AttachmentNames", doc)
+		For n = 0 To Ubound( arrAttachmentNames )
+			
+			If arrAttachmentNames(n) Like "*.*"  Then                       ' Is file
+				bDocHasAttachmentFile = True
+				Set thisAttachment = doc.GetAttachment(arrAttachmentNames(n) )
+				
+				fileName=Cstr(CurrID)+"-"+arrAttachmentNames(n)
+				
+				
+				
+				
+				numFiles = numFiles + 1 ' Count files even if not extracted
+			End If
+			
+		Next n
+		
+		' Count occurence of Attached file in Notes Document
+		If bDocHasAttachmentFile Then
+			If Iselement ( nFormAttachedFileList(strThisForm) ) Then
+				nFormAttachedFileList(strThisForm) = nFormAttachedFileList(strThisForm) + 1
+			Else
+				nFormAttachedFileList(strThisForm) = 1
+			End If
+		End If
+		
+		
+		
+		allFieldNames = Evaluate("@DocFields", doc)
+		For k = 0 To Ubound( allFieldNames )	
+			' *** Change ***  Rewritten without using Replace function [to be Lotus Notes 5.x compatible]
+			' Earlier usage:  Replace(allFieldNames(k), "$", "")  			
+			thisFieldName = Ucase$(allFieldNames(k))
+			modFieldName = thisFieldName
+			bLoop = True
+			While bLoop
+				If Not Left$(modFieldName, 1) = "$" Then
+					bLoop = False
+				Else
+					modFieldName = Mid$(modFieldName, 2)
+				End If		
+			Wend
+			
+			Set item = doc.GetFirstItem(thisFieldName )
+			If item Is Nothing Then
+				' This Notes Document does not have this Field Item even though found above!
+				bThisFormField = False			
+				If Iselement ( nErrorList("FormAnyFieldNoValue") ) Then
+					nErrorList("FormAnyFieldNoValue") = nErrorList("FormAnyFieldNoValue") + 1
+				Else
+					nErrorList("FormAnyFieldNoValue") = 1
+				End If
+			Else	
+				' This Notes Document has this Field Item!
+				strThisFieldName = thisFieldName
+				strThisFormFieldName = strThisForm +"#"+ strThisFieldName
+				If item.Text = "" Then
+					bThisFormField = False				
+					If Iselement ( nErrorList("FormFieldEmptyTextValue") ) Then
+						nErrorList("FormFieldEmptyTextValue") = nErrorList("FormFieldEmptyTextValue") + 1
+					Else
+						nErrorList("FormFieldEmptyTextValue") = 1
+					End If
+'				Elseif item.Values(0) = "" Then
+				Elseif False Then
+					' This Notes Document Field has empty Value!
+					bThisFormField = False				
+					If Iselement ( nErrorList("FormFieldEmptyValue") ) Then
+						nErrorList("FormFieldEmptyValue") = nErrorList("FormFieldEmptyValue") + 1
+					Else
+						nErrorList("FormFieldEmptyValue") = 1
+					End If
+				Else
+				' This Notes Document Field has a Value!
+					bThisFormField = True
+'					strThisFieldValue = item.Values(0)
+					strThisFieldValue = item.Text
+					' Counter nFormFieldList
+					If Iselement ( nFormFieldList(strThisFormFieldName) ) Then
+						nFormFieldList(strThisFormFieldName) = nFormFieldList(strThisFormFieldName) + 1
+					Else
+					' First occurence of this FormField Name
+						nFormFieldList(strThisFormFieldName) = 1
+						nFormFieldMax = nFormFieldMax + 1
+						' ToDO: sort out the count sequence for this array
+						' Redim Preserve strFormFieldArray (1 To nFormMax, 1 To nFormFieldMax, 1 To 2)
+						' strFormFieldArray(nFormMax, nFormMax) = strThisForm    ' Set the ecountered Form Name in the next Array spot
+					End If
+					
+				End If    ' Else Item Value = ""
+			End If    ' Else Field Item Is Nothing
+			
+			If Not bThisFormField Then
+				If (bExportEmptyTags) Then
+					' Do export empty tags (fields with no data)
+					' modFieldName
+					
+				End If
+			End If
+			
+		Next k
+		
+		'# Debug Loop section #
+		If bDebugLoop Then
+			If numDocs Mod nDebugLoopPrintCount = 0 Then
+				Print strDebugLoopTxtPrefix + Format$(numDocs) + strDebugLoopTxtPostfix2
+			End If
+		End If 
+		'# END Debug Loop section #
+		
+		Set doc = dc.GetNextDocument( doc )
+		CurrID = CurrID + 1
+	Wend
+	
+	'# Create Analyze Output file
+	result = printAnalyze()
+	
+	'# Print results log
+	result = printResultsLog()
+	
+'#  Error logfile, only printed when an error arises
+	If numErr > 0 Then
+		result=printErrorLog()
+	End If
+	
+Done: 
+	' Messagebox Done!
+	nBoxType = cstMB_OK+ cstMB_ICONINFORMATION
+	strMessageTitle = cstVersionPrefix +"_"+ cstVersionName +" ver "+ cstVersionNo
+	strMessageText ="Done exporting data from " + Format$(nDcCount) + " Notes Documents in this Database, possibly with attached files."
+	nAnswer = Messagebox(strMessageText, nBoxType, strMessageTitle)
+	
+	Exit Sub ' Skip  ErrorHanlder - if successfull
+ErrorHandler: 
+	Select Case Err                 
+	Case Else               
+'## Log and count Errors s
+		numErr = numErr + 1
+		strErrors = strErrors + strNewLine + strTab + strTab + |<| + strErrorTxt + |>| + Cstr(Err) + | | + strInTxt + | | + Cstr(thisAgent.Name) + | | + strOnLineTxt + |  | + Cstr(Erl) + |: | + Cstr(Error) +|</| + strErrorTxt + |>|             
+		Resume Done                                                             
+	End Select 
+	
+End Sub
+Function setConstSettings()
+	'# Use settings as defined inside Lotus Script (no use of external Settings file)
+	
+	'## 2 Settings section ##
+	If cstLotusScriptPostfixVersion Then
+		strProjectPathPostfix = "_"+ cstVersionNo
+	Else
+		strProjectPathPostfix = cstLotusScriptPostfix
+	End If
+	
+	strSettingsFile = cstSettingsFile
+	bSettingsUseDataDir = cstSettingsUseDataDir
+	strSettingsFileDir = cstSettingsFileDir
+	bExportTargetUseNotesDataExportDir = cstExportTargetUseNotesDataExportDir
+	strExportTargetDir = cstExportTargetDir
+	
+	' ## 3 Export format section ##
+	bExportXML = cstExportXML
+	bExportTXT = cstExportTXT
+	bExportXML00 = cstExportXML00
+	bExportTXT00= cstExportTXT00
+	bExportXML11 = cstExportXML11
+	bExportTXT11 = cstExportTXT11
+	bExportEmptyTags = cstExportEmptyTags
+	bExportAttachments = cstExportAttachments
+	bSkipEncoding = cstSkipEncoding
+	strCharset = cstCharset 
+	bExportCsvTXT = cstExportCsvTXT
+	strExportCsvSeparator = cstExportCsvSeparator
+	bExportAnalyze = cstExportAnalyze
+	
+	'## 4 File, folders, tagnames, etc. (NO slashes) ##
+	strXmlFolder = cstXmlFolder
+	strSpecFolder = cstSpecFolder
+	strTxtFolder = cstTxtFolder
+	strAttachmentFolder = cstAttachmentFolder
+	strLogFolder = cstLogFolder
+	strAnalyzeFolder  = cstAnalyzeFolder
+	
+	strResultsLogName = cstResultsLogName
+	strExportLogName = cstExportLogName
+	strErrorLogName = cstErrorLogName
+	strAnalyzeName = cstAnalyzeName
+	
+	strRecordsTxt = cstRecordsTxt
+	strRecordsetTxt = cstRecordsetTxt
+	strAttachmentTxt = cstAttachmentTxt
+	
+	strTagExportXml = cstTagExportXml
+	strTagExportTxt = cstTagExportTxt
+	strTagExportAttach = cstTagExportAttach
+	strTagExportLog = cstTagExportLog
+	
+	strSavedTxt = cstSavedTxt
+	strErrorTxt = cstErrorTxt
+	strOnLineTxt = cstOnLineTxt
+	strInTxt = CstInTxt
+	
+	'## 5 Additional Settings ##
+	nInitCurrID = cstInitCurrID
+	
+	'## 9 Debug Settings ##
+	bDebugLoop = cstDebugLoop
+	nDebugLoopPrintCount = cstDebugLoopPrintCount
+	strDebugLoopTxtPrefix = cstDebugLoopTxtPrefix
+	strDebugLoopTxtMid = cstDebugLoopTxtMid
+	strDebugLoopTxtPostfix = cstDebugLoopTxtPostfix
+End Function
+Function printSettingsLog()
+	'# Settings logfile     
+	' The thought behind this is that one can send this file if a problem arises or someone else wishes to use the same parameters
+	
+	' SWITCH - use for Lotus Notes/Domino ver 6.5 & 5.x
+	Open  strProjectPath + |\| + strLogFolder + |\| + strExportLogName + |.xml| For Output As 1
+	
+	If bSkipEncoding Then
+		Print #1, |<?xml version="1.0" standalone="yes"?>|
+	Else
+		Print #1, |<?xml version="1.0" encoding="| + thisCharset + |" standalone="yes"?>|
+	End If
+	Print #1, |<settings>|
+	
+	' <runningCode>
+	Print #1, strTab + |<runningCode type="Lotus Script">|
+	Print #1, strTab + strTab + |<version versionNumber="| + cstVersionNo + |" versionDate=" | + cstVersionDate + |">|
+	Print #1, strTab + strTab + strTab + |<codeName>| + cstVersionName + |</codeName>|
+	Print #1, strTab + strTab + strTab + |<versionNumber>| + cstVersionNo + |</versionNumber>|
+	Print #1, strTab + strTab + strTab + |<versionDate>| + cstVersionDate + |</versionDate>|
+	Print #1, strTab + strTab + strTab + |<versionInfo>| + cstVersionInfo + |</versionInfo>|
+	If Not cstAuthors = "" Then
+		Print #1, cstAuthors
+	End If
+	Print #1, strTab + strTab + |</version>|	
+	Print #1, strTab + |</runningCode>|
+	
+	' <export>
+	Print #1, strTab + |<export workfolder="| + strExportTargetDir + |">|
+	Print #1, strTab + strTab + |<| +strTagExportXml+ | file="combined" target="| + strXmlFolder  + |\">|  + Cstr(bExportXML) + |</| +strTagExportXml+ |>|
+	Print #1, strTab + strTab + |<| +strTagExportXml+ | file="loose" target="| + strXmlFolder  + |\1\">|  + Cstr(bExportXML11) + |</| +strTagExportXml+ |>|
+	Print #1, strTab + strTab + |<| +strTagExportTxt+ | file="combined" target="| + strTxtFolder  + |\">|  + Cstr(bExportTXT) + |</| +strTagExportTxt+ |>|
+	Print #1, strTab + strTab + |<| +strTagExportTxt+ | file="loose" target="| + strTxtFolder  + |\1\">|  + Cstr(bExportTXT11) + |</| +strTagExportTxt+ |>|
+	Print #1, strTab + strTab + |<| +strTagExportAttach+ | file="loose"  target="| + strAttachmentFolder  + |\">| + Cstr(bExportAttachments) + |</| +strTagExportAttach+ |>|        
+	Print #1, strTab + strTab + |<| +strTagExportLog+ | file="combined" type="error" name="| + strErrorLogName + |.xml" target="| + strLogFolder  + |\">True</| +strTagExportLog+ |>|
+	Print #1, strTab + strTab + |<| +strTagExportLog+ | file="combined" type="results" name="| + strResultsLogName + |.xml" target="| + strLogFolder  + |\">True</| +strTagExportLog+ |>|
+	Print #1, strTab + strTab + |<| +strTagExportLog+ | file="combined" type="exportsettings" name="| + strExportLogName + |.xml" target="| + strLogFolder  + |\">True</| +strTagExportLog+ |>|
+	Print #1, strTab + |</export>|
+	
+	' <globalization>
+	Print #1, strTab +|<globalization>|      
+	Print #1, strTab + strTab  + |<recordsTxt>| + strRecordsTxt + |</recordsTxt>|
+	Print #1, strTab + strTab  + |<attachmentTxt>| + strAttachmentTxt + |</attachmentTxt>|
+	Print #1, strTab + strTab  + |<errorTxt>| + strErrorTxt + |</errorTxt>|
+	Print #1, strTab + strTab  + |<onLineTxt>| + strOnLineTxt + |</onLineTxt>|
+	Print #1, strTab + strTab  + |<inTxt>| + strInTxt + |</inTxt>|
+	Print #1, strTab + strTab  + |<savedTxt>| + strSavedTxt + |</savedTxt>|
+	Print #1, strTab +|</globalization>|     
+	
+	' <tags>
+	Print #1, strTab +|<tags>|       
+	Print #1, strTab + strTab  + |<printempty>| + Cstr(bExportEmptyTags) + |</printempty>|
+	Print #1, strTab +|</tags>|              
+	
+	Print #1, |</settings>|
+	
+	Close #1
+End Function
+Function printErrorLog()
+	' SWITCH - use for Lotus Notes/Domino ver 6.5 & 5.x
+	Open  strProjectPath + |\| + strLogFolder + |\| + strErrorLogName + |.xml| For Output As 1	
+	
+	If bSkipEncoding Then
+		Print #1, |<?xml version="1.0" standalone="yes"?>|
+	Else
+		Print #1, |<?xml version="1.0" encoding="| + thisCharset + |" standalone="yes"?>|
+	End If
+	Print #1, "" + strErrors +""
+	
+	Close #1
+End Function
+Function printResultsLog()
+	'# Results file, this logs the count of documents, attachments and errors. It also displays version name of the script
+	
+	' SWITCH - use for Lotus Notes/Domino ver 6.5 & 5.x
+	Open  strProjectPath + |\| + strLogFolder + |\| + strResultsLogName + |.xml| For Output As 1
+	
+	If bSkipEncoding Then
+		Print #1, |<?xml version="1.0" standalone="yes"?>|
+	Else
+		Print #1, |<?xml version="1.0" encoding="| + thisCharset + |" standalone="yes"?>|
+	End If
+	Print #1, |<| + strResultsLogName + |>|	
+	
+	Print #1, strTab + |<| + strRecordsTxt + |>| + Cstr(numDocs) + |</| + strRecordsTxt + |>|
+	Print #1, strTab  + |<| + strAttachmentTxt + |>| +  Cstr(numFiles) + |</| + strAttachmentTxt + |>|
+	Print #1, strTab  + |<| + strSavedTxt + |>| +  Cstr(numFilesSaved) + |</| + strSavedTxt + |>|
+	Print #1, strTab  + |<| + strErrorTxt + |>| +  Cstr(numErr) + |</| + strErrorTxt + |>|
+	
+	Print #1, |</| + strResultsLogName + |>|	
+	
+	Close #1
+End Function
+Function makeFolders()
+	'# ToDo: Check for existing folder and optionally create folder structure.
+	
+	'#  Make folders for data extraction
+	Mkdir  strProjectPath													' Root folder for export
+	Mkdir  strProjectPath + |\| + strLogFolder + |\|						' Log subfolder 
+	
+	If bExportAttachments Then
+		Mkdir  strProjectPath + |\| + strAttachmentFolder + |\|		' Attachment subfolder
+	End If
+	
+	If bExportXML Or bExportXML11 Then        
+		Mkdir  strProjectPath + |\| + strXmlFolder + |\|				' XML subfolder
+		If bExportXML11 Then
+			Mkdir  strProjectPath + |\| + strXmlFolder + |\1\|			' XML subfolder
+		End If
+	End If
+	
+	If bExportTXT Or bExportTXT11 Then
+		Mkdir  strProjectPath + |\| + strTxtFolder + |\|					' TXT subfolder
+		If bExportTXT11 Then
+			Mkdir  strProjectPath + |\| + strTxtFolder + |\1\|
+		End If
+	End If
+	
+	'#  Analyze output section
+	If bExportAnalyze Then
+		Mkdir  strProjectPath + "\" + strAnalyzeFolder + "\"    ' Analyze subfolder 
+		
+	End If
+End Function
+Function printAnalyze()
+	 '#  Analyze output file output
+	If bExportAnalyze Then  ' if set to export large xml (combined)		
+		' SWITCH - use for Lotus Notes/Domino ver 6.5 & 5.x
+		Open strProjectPath + "\" + strAnalyzeFolder + "\" + Left(db.FileName, Len(db.FileName) - 4) + ".xml" For Output As 5				
+		If bSkipEncoding Then
+			Print #5, |<?xml version="1.0"?>| 
+		Else
+			Print #5, |<?xml version="1.0"  encoding="| + thisCharset + |"?>| 
+		End If
+		Print #5, |<| + "analyze" + |>|
+		
+		' nErrorList
+		Print #5, 
+		Print #5, "nErrorList"
+		Forall list_a In nErrorList
+			Print #5, Listtag(list_a); " = "; list_a  
+		End Forall
+		
+		' strFormArray
+		Print #5, 
+		Print #5, "strFormArray"
+		For n = Lbound(strFormArray) To Ubound(strFormArray)
+			Print #5, "Form(" + Format$(n) + ") = " + strFormArray(n)
+		Next
+		
+		' nFormAttachedFileList
+		Print #5, 
+		Print #5, "nFormAttachedFileList"
+		Forall list_d In nFormAttachedFileList
+			Print #5, Listtag(list_d); " = "; list_d
+		End Forall
+		
+		' nFormMax
+		Print #5, 
+		Print #5, "nFormMax = ", Format$(nFormMax)
+		
+		' nFormList
+		Print #5, 
+		Print #5, "nFormList"
+		Forall list_b In nFormList
+			Print #5, Listtag(list_b); " = "; list_b
+		End Forall
+		
+		' nFormFieldMax
+		Print #5, 
+		Print #5, "nFormFieldMax = ", Format$(nFormFieldMax)
+		
+		' nFormFieldList
+		Print #5, 
+		Print #5, "nFormFieldList"
+		Forall list_c In nFormFieldList
+			Print #5, Listtag(list_c); " = "; list_c  
+		End Forall
+		
+		Print #5, |</| + "analyze" + |>|
+		Close #5
+	End If
+End Function
+Function loadItemTypes()
+	Dim strItemTypeList List As String
+	strItemTypeList(16) = "ACTIONCD"
+'ACTIONCD (16) means saved action CD records; non-Computable; canonical form.
+'ASSISTANTINFO (17) means saved assistant information; non-Computable; canonical form.
+'ATTACHMENT (1084) means file attachment.
+'AUTHORS (1076) means authors.
+'COLLATION (2).
+'Note  This value is new with Release 6.
+'DATETIMES (1024) means date-time value or range of date-time values.
+'EMBEDDEDOBJECT (1090) means embedded object.
+'ERRORITEM (256) means an error occurred while accessing the type.
+'FORMULA (1536) means Notes formula.
+'HTML (21) means HTML source text.
+'ICON (6) means icon.
+'LSOBJECT (20) means saved LotusScript Object code for an agent.
+'MIME_PART (25) means MIME support.
+'NAMES (1074) means names.
+'NOTELINKS (7) means link to a database, view, or document.
+'NOTEREFS (4) means reference to the parent document.
+'NUMBERS (768) means number or number list.
+'OTHEROBJECT (1085) means other object.
+'QUERYCD (15) means saved query CD records; non-Computable; canonical form.
+'READERS (1075) means readers.
+'RICHTEXT (1) means rich text.
+'SIGNATURE (8) means signature.
+'TEXT (1280) means text or text list.
+'UNAVAILABLE (512) means the item type isn't available.
+'UNKNOWN (0) means the item type isn't known.
+'USERDATA (14) means user data.
+'USERID (1792) means user ID name.
+'VIEWMAPDATA (18) means saved ViewMap dataset; non-Computable; canonical form.
+'VIEWMAPLAYOUT (19) means saved ViewMap layout; non-Computable; canonical form.
+	
+End Function
+

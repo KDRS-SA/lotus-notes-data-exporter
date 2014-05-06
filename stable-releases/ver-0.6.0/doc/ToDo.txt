@@ -15,9 +15,3 @@ ToDo list:
 8. Improved debug and error-handling and reports
 9. More informative logging in AgentLog for informative report after manual started agent
 10. Add functionality for replacing illegal XML-characters with their equivalent entities.
-11. Start- and End-dialog box when running Lotus Script agent.
-12. Separate database running the Lotus Notes Data Export script (Simplified usage of the Lotus Notes Data Export as it can be run without importing and editing the agent as well as no need for access to Lotus Designer that must be installed on the client to edit a Lotus Script Agent).
-13. Open the Database(s) to export from this simple Lotus Notes Database.
-14. Edit running parameters from this Database.
-15. Enable parameters to be edited and saved to settings files on the client.
-16. Analyse data users access to the selected databases.
