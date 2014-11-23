@@ -4,12 +4,11 @@ A_xmlExport.txt
 Lotus Script Agent creating export from Notes database.
 Supported Lotus Notes versions: 6.5, 5.x
 
-Lotus Script Version: A.1.3.0
+Lotus Script Version: A.1.3.2
+Git version: 0.7.1
 
 Description:
-Exports alle notes documents from a Lotus Notes database including attached files inside each notes document. You must have access to Lotus Notes Client with Designer Client in order to create a Lotus Script agent running this code. Lotus Notes ID in use must have sufficient access (Access Control List, preferably Manager). Generic code exporting all field names and field values from each notes document. Parameters for export path etc. 
-
-Git version-name: 0.6.0
+Exports all notes documents from a Lotus Notes database including attached files inside each notes document. You must have access to Lotus Notes Client with Designer Client in order to create a Lotus Script agent running this code. Lotus Notes ID in use must have sufficient access (Access Control List, preferably Manager). Generic code exporting all field names and field values from each notes document. Parameters for export path etc. 
 
 Features:
 -XML export

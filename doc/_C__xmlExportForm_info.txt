@@ -1,0 +1,35 @@
+File:
+C-xmlExportForm.txt
+
+Lotus Script Agent creating export (form-based) from Notes database.
+Supported Lotus Notes versions: 6.5, 5.x
+
+Lotus Script Version: C.0.3.0
+Git version: 0.7.0
+
+Description:
+Database analyse and form-based or custom export. All or partial extract of included lotus notes documents from a Lotus Notes database including attached files inside each notes document. You must have access to Lotus Notes Client with Designer Client in order to create a Lotus Script agent running this code. Lotus Notes ID in use must have sufficient access (Access Control List, preferably Manager). Generic code exporting all field names and field values from each notes document. Parameters for export path etc.
+
+Features:
+-XML export
+-TXT export
+
+True/False-parameter selections for: 
+-single complete xml-file from all notes documents
+-single complete txt-file from all notes documents
+-one xml-file for each individual notes document
+-one txt-file for each individual notes document
+
+Compatible with Lotus Notes 5.x & 6.5, now combined in a single Lotus Script agent.
+- Not tested with Notes 4.x or earlier, nor later versions after 6.5
+- Tested successfully norwegian characters export with XML declaration Encoding = "ISO-8859-1"
+- Settings.xml tags added parameters for xml (expXml), txt (expTxt), attachments (attachments), log (log).
+
+
+### Parameter section ###
+
+### Mandatory parameter actions ###
+The export target dircetory must be created and available (this parameter can be edited as desired).
+ exportTarget = |C:\Export\LotusNotes\|   
+ 
+### Optional parameter actions (can run as is or be changed) ###

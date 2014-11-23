@@ -7,10 +7,10 @@ Consists of a number of Lotus Notes Script Agents solving different tasks of dat
 Available Lotus Notes Script Agents:
 A_xmlExport.txt - XML/TXT export.
 B_dxlExport.txt - DXL export.
+C_xmlExportForm.txt - Database Analyse (and later form-based or custom export).
 
 Scripts to be released later on:
-C_analyseDatabase.txt - DB analyse of notes docs, fields, forms etc (types & counters).
-D_xmlExportForm.txt - XML export structyred by type of forms etc (external config file).
+D_analyseDatabase.txt - DB analyse of Lotus Notes docs, fields, forms etc (types & counters).
 
 
 Parameter settings in the Lotus Notes script agent may need to be edited:

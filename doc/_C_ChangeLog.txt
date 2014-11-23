@@ -4,7 +4,7 @@ Lotus Notes Data Exporter
 
 ### git ver 0.7.0 2014-05-06 Torbjørn Aasen ###
 C_xmlExportForm ver C.0.3.0 2014-05-05 
-- Database Analyse (and later Export based on form or special targeted export).
+- Database Analyse (and later form-based or custom export).
 - Counts Form names and numbers as well as fields names and numbers inside each form.
 - Must be sorted in next version.
 - XML output is text only in middle at present.
